@@ -52,7 +52,7 @@
       start.textContent = doneCount() ? "Welcome back, Abbas. Continue: " + next.title : "Start Lesson 1";
     } else {
       start.href = "#certificate";
-      start.textContent = "Level 1 complete, Abbas 🎉";
+      start.textContent = "Level 1 complete, Abbas";
     }
     var cert = $("#certificate");
     if (cert) cert.hidden = !!next;
@@ -142,6 +142,7 @@
       var prev = progress[l.id] || {};
       progress[l.id] = { passed: passed || !!prev.passed, best: Math.max(correct, prev.best || 0) };
       save(progress);
+      if (passed) celebrate();
       var r = $("#quiz-result");
       r.innerHTML = '<div class="result ' + (passed ? "pass" : "fail") + '">' +
         "Abbas, you scored " + correct + " / " + l.quiz.length + ". " +
@@ -150,7 +151,7 @@
       var retry = $("#retry");
       if (retry) retry.onclick = function () { $("#questions").innerHTML = ""; r.innerHTML = ""; renderQuiz(l); };
       if (passed && doneCount() === LESSONS.length) {
-        r.innerHTML += '<div class="result pass">🎓 Congratulations, Abbas! You\'ve finished every Level 1 lesson. <a href="index.html#certificate">See your completion badge</a>.</div>';
+        r.innerHTML += '<div class="result pass">Congratulations, Abbas! You\'ve finished every Level 1 lesson. <a href="index.html#certificate">See your completion badge</a>.</div>';
       }
     }
   }
@@ -238,7 +239,7 @@
         var p = 1 / (1 + Math.exp(-sum));
         el.querySelector(".neuron-out").innerHTML =
           "Weighted sum = " + sum.toFixed(1) + " → activation (sigmoid) = <strong>" + Math.round(p * 100) + "%</strong><br>" +
-          (p >= 0.5 ? "🏖️ The neuron fires: <strong>go to the beach!</strong>" : "🏠 The neuron stays quiet: <strong>stay home.</strong>");
+          (p >= 0.5 ? "The neuron fires: <strong>go to the beach!</strong>" : "The neuron stays quiet: <strong>stay home.</strong>");
       }
       el.addEventListener("input", update);
       update();
@@ -408,7 +409,7 @@
         svg.innerHTML = html;
         var e = mae(m, b);
         el.querySelector(".neuron-out").innerHTML = "Average error (the <em>loss</em>): <strong>£" + Math.round(e) + "k</strong> per home. " +
-          (e < bestErr + 3 ? "🎯 Excellent, that's about as good as a straight line gets here." : "The red lines show each error. Try to shrink them.");
+          (e < bestErr + 3 ? "Excellent, that's about as good as a straight line gets here." : "The red lines show each error. Try to shrink them.");
       }
       el.querySelector("[data-best]").onclick = function () {
         el.querySelector('[data-k="m"]').value = bestM.toFixed(2); el.querySelector('[data-k="b"]').value = Math.round(bestB); update();
@@ -441,7 +442,7 @@
         fruit.forEach(function (f) { html += '<circle class="' + (f[2] === "A" ? "apple" : "lemon") + '" cx="' + X(f[0]) + '" cy="' + Y(f[1]) + '" r="6"/>'; });
         html += '<text class="star" x="' + X(v.w) + '" y="' + (Y(v.r) + 6) + '" text-anchor="middle">★</text>';
         svg.innerHTML = html;
-        var guess = votes.A > votes.L ? "🍎 an apple" : "🍋 a lemon";
+        var guess = votes.A > votes.L ? "an apple" : "a lemon";
         el.querySelector(".neuron-out").innerHTML = "The " + v.k + " nearest neighbour" + (v.k > 1 ? "s vote" : " votes") + ": " + votes.A + " apple, " + votes.L + " lemon. Prediction: <strong>" + guess + "</strong>.";
       }
       el.addEventListener("input", update);
@@ -453,23 +454,36 @@
       // [spam score 0-100, actually spam?]
       var mail = [[97, 1], [93, 1], [88, 1], [85, 0], [81, 1], [76, 1], [72, 0], [68, 1], [63, 0], [58, 1], [55, 0], [49, 0], [44, 1], [40, 0], [35, 0], [28, 0], [22, 0], [15, 0], [9, 0], [4, 0]];
       el.className = "panel";
-      el.innerHTML = "<h3>Try it: set the spam threshold</h3><p>Twenty emails, each given a spam score by an AI. Red outline = really spam. Emails at or above the threshold go to junk.</p>" +
-        '<label class="slider-row"><span>Threshold</span><input type="range" min="0" max="100" step="1" value="60"><output></output></label>' +
-        '<div class="mailrow"></div><div class="neuron-out" aria-live="polite"></div>';
-      var row = el.querySelector(".mailrow");
+      el.innerHTML = "<h3>Try it: set the spam threshold</h3>" +
+        "<p>Abbas, an AI has looked at 20 emails and given each one a score from 0 to 100 for how spammy it seems. Some really are spam and some are genuine emails. You choose the cut-off: any email scoring at or above it goes to <b>Junk</b>, and the rest stay in your <b>Inbox</b>.</p>" +
+        "<p>Move the slider and watch what happens. Emails in the wrong place turn red: spam that got into your inbox, or a real email sent to junk.</p>" +
+        '<label class="slider-row"><span>Cut-off</span><input type="range" min="0" max="100" step="1" value="60" aria-label="Spam cut-off"><output></output></label>' +
+        '<div class="mailboxes"><div class="mailbox"><h4>Inbox <span class="box-count" data-box="in"></span></h4><div class="mailrow" data-box="in"></div></div>' +
+        '<div class="mailbox junk"><h4>Junk <span class="box-count" data-box="junk"></span></h4><div class="mailrow" data-box="junk"></div></div></div>' +
+        '<div class="neuron-out" aria-live="polite"></div>';
+      var inbox = el.querySelector('.mailrow[data-box="in"]'), junk = el.querySelector('.mailrow[data-box="junk"]');
+      function chip(m, flag) {
+        var wrong = flag !== !!m[1];
+        return '<span class="mail' + (wrong ? " wrong" : "") + '" title="AI score ' + m[0] + '">' + (m[1] ? "SPAM" : "REAL") + "<small>" + m[0] + "</small></span>";
+      }
       function update() {
         var t = parseInt(el.querySelector("input").value, 10);
         el.querySelector("output").textContent = t;
-        var tp = 0, fp = 0, fn = 0, tn = 0;
-        row.innerHTML = mail.map(function (m) {
+        var tp = 0, fp = 0, fn = 0, tn = 0, inH = "", junkH = "";
+        mail.forEach(function (m) {
           var flag = m[0] >= t;
           if (flag && m[1]) tp++; else if (flag) fp++; else if (m[1]) fn++; else tn++;
-          return '<span class="mail' + (m[1] ? " spam" : "") + (flag ? " flagged" : "") + '" title="score ' + m[0] + '">' + (flag ? "🗑️" : "📧") + "<small>" + m[0] + "</small></span>";
-        }).join("");
+          if (flag) junkH += chip(m, true); else inH += chip(m, false);
+        });
+        inbox.innerHTML = inH || '<em class="empty">Empty</em>';
+        junk.innerHTML = junkH || '<em class="empty">Empty</em>';
+        el.querySelector('.box-count[data-box="in"]').textContent = "(" + (fn + tn) + ")";
+        el.querySelector('.box-count[data-box="junk"]').textContent = "(" + (tp + fp) + ")";
         var prec = tp + fp ? Math.round(100 * tp / (tp + fp)) : 100, rec = Math.round(100 * tp / (tp + fn));
         el.querySelector(".neuron-out").innerHTML =
-          "Caught (true positives): <b>" + tp + "</b> · False alarms: <b>" + fp + "</b> · Missed spam: <b>" + fn + "</b> · Correctly left alone: <b>" + tn + "</b><br>" +
-          "Accuracy <strong>" + Math.round(100 * (tp + tn) / mail.length) + "%</strong> · Precision <strong>" + prec + "%</strong> · Recall <strong>" + rec + "%</strong>";
+          "Spam caught: <b>" + tp + " of " + (tp + fn) + "</b> · Spam that got through: <b>" + fn + "</b> · Real emails wrongly sent to junk: <b>" + fp + "</b><br>" +
+          "<b>Precision " + prec + "%</b>: of the emails in Junk, how many really are spam. " +
+          "<b>Recall " + rec + "%</b>: of all the spam, how much ended up in Junk.";
       }
       el.addEventListener("input", update);
       update();
@@ -558,6 +572,105 @@
   else if (page === "lesson") renderLesson();
   else if (page === "glossary") renderGlossary();
 
+  /* ---------- side panels (wide screens only) ---------- */
+  function allTerms() {
+    var all = [];
+    LESSONS.forEach(function (l, i) { l.terms.forEach(function (t) { all.push({ term: t[0], def: t[1], lesson: l, n: i + 1 }); }); });
+    return all;
+  }
+  function termOfTheDay() {
+    var all = allTerms(), day = Math.floor(Date.now() / 86400000);
+    return all[day % all.length];
+  }
+  function card(title, body) { return '<section class="side-card"><h4>' + title + "</h4>" + body + "</section>"; }
+  function progressCard() {
+    var n = doneCount(), t = LESSONS.length, pct = Math.round((n / t) * 100);
+    var next = LESSONS.find(function (l) { return !isDone(l.id); });
+    return card("Your progress",
+      '<div class="side-big">' + pct + '%</div><div class="bar"><span style="width:' + pct + '%"></span></div>' +
+      '<p class="side-small">' + n + " of " + t + " lessons done</p>" +
+      (next ? '<p class="side-small">Next up: <a href="lesson.html?id=' + next.id + '">' + esc(next.title) + "</a></p>" : "<p class=\"side-small\">Level 1 complete. Brilliant work, Abbas.</p>"));
+  }
+  function termCard() {
+    var t = termOfTheDay();
+    return card("Term of the day", '<p class="side-term">' + esc(t.term) + '</p><p class="side-small">' + esc(t.def) + '</p><p class="side-small"><a href="lesson.html?id=' + t.lesson.id + '">From Lesson ' + t.n + "</a></p>");
+  }
+
+  function navTab() {
+    var UNITS = window.LEVEL1_UNITS || [];
+    var curId = page === "lesson" ? (new URLSearchParams(location.search).get("id") || LESSONS[0].id) : null;
+    var html = '<nav class="nav-tab" aria-label="Course menu">' +
+      '<a class="nav-top' + (page === "home" ? " here" : "") + '" href="index.html">Home</a>' +
+      '<a class="nav-top' + (page === "glossary" ? " here" : "") + '" href="glossary.html">Glossary</a>' +
+      '<p class="nav-level">Level 1 · Foundations</p>';
+    UNITS.forEach(function (u) {
+      var ls = LESSONS.filter(function (l) { return l.unit === u.id; });
+      var open = !curId || ls.some(function (l) { return l.id === curId; });
+      var d = ls.filter(function (l) { return isDone(l.id); }).length;
+      html += '<details class="nav-unit"' + (open ? " open" : "") + '><summary><span>' + esc(u.title.replace(/^Unit (\d+) · /, "$1. ")) + '</span><span class="side-count">' + d + "/" + ls.length + "</span></summary><ol>" +
+        ls.map(function (l) {
+          var n = LESSONS.indexOf(l) + 1;
+          return '<li class="' + (l.id === curId ? "here" : "") + (isDone(l.id) ? " done" : "") + '"><a href="lesson.html?id=' + l.id + '"><span class="nav-num">' + (isDone(l.id) ? "✓" : n) + "</span>" + esc(l.title) + "</a></li>";
+        }).join("") + "</ol></details>";
+    });
+    html += '<p class="nav-level nav-locked">Levels 2 to 5 · coming soon</p></nav>';
+    return html;
+  }
+
+  function buildSides() {
+    var main = document.querySelector("main");
+    if (!main) return;
+    var left = navTab(), right = "";
+    if (page === "home") {
+      var units = (window.LEVEL1_UNITS || []);
+      document.querySelectorAll(".unit-head").forEach(function (h, i) { h.id = "unit-" + (i + 1); });
+      right = progressCard() + termCard() + card("Jump to a unit", '<ol class="side-list">' + units.map(function (u, i) {
+        var ls = LESSONS.filter(function (l) { return l.unit === u.id; }), d = ls.filter(function (l) { return isDone(l.id); }).length;
+        return '<li><a href="#unit-' + (i + 1) + '">' + esc(u.title.replace(/^Unit \d+ · /, "")) + '</a><span class="side-count">' + d + "/" + ls.length + "</span></li>";
+      }).join("") + "</ol>") + card("How each lesson works",
+        '<ul class="side-steps"><li><b>Read</b> for about 10 to 13 minutes</li><li><b>Try</b> the hands-on activity</li><li><b>Pass</b> the short quiz to tick it off</li><li><b>Dig deeper</b> with the listed sources</li></ul>');
+    } else if (page === "lesson") {
+      var art = document.getElementById("lesson");
+      var heads = art.querySelectorAll("h2");
+      heads.forEach(function (h, i) { h.id = "sec-" + (i + 1); });
+      var id = new URLSearchParams(location.search).get("id");
+      var l = LESSONS.find(function (x) { return x.id === id; }) || LESSONS[0];
+      right = card("In this lesson", '<ol class="side-list side-toc">' + Array.prototype.map.call(heads, function (h) {
+        return '<li><a href="#' + h.id + '">' + esc(h.textContent) + "</a></li>";
+      }).join("") + "</ol>") +
+        card("Key terms", '<dl class="side-terms">' + l.terms.slice(0, 6).map(function (t) {
+          return "<dt>" + esc(t[0]) + "</dt><dd>" + esc(t[1]) + "</dd>";
+        }).join("") + "</dl>" + (l.terms.length > 6 ? '<p class="side-small"><a href="#sec-' + (Array.prototype.findIndex.call(heads, function (h) { return /key terms/i.test(h.textContent); }) + 1) + '">See all ' + l.terms.length + " terms</a></p>" : "")) +
+        progressCard();
+    } else if (page === "glossary") {
+      var letters = {};
+      document.querySelectorAll("#gloss dt").forEach(function (dt) {
+        var c = dt.textContent.charAt(0).toUpperCase();
+        if (!letters[c]) { letters[c] = true; dt.id = "letter-" + c; }
+      });
+      right = card("Jump to a letter", '<div class="side-letters">' + Object.keys(letters).map(function (c) { return '<a href="#letter-' + c + '">' + c + "</a>"; }).join("") + "</div>") + termCard() + progressCard();
+    }
+    var layout = document.createElement("div");
+    layout.className = "layout";
+    main.parentNode.insertBefore(layout, main);
+    var a = document.createElement("aside"); a.className = "side side-left"; a.innerHTML = left;
+    var b = document.createElement("aside"); b.className = "side side-right"; b.innerHTML = right;
+    layout.appendChild(a); layout.appendChild(main); layout.appendChild(b);
+
+    // Highlight the section being read in the lesson outline.
+    var toc = document.querySelectorAll(".side-toc a");
+    if (toc.length && "IntersectionObserver" in window) {
+      var obs = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (!e.isIntersecting) return;
+          toc.forEach(function (x) { x.classList.toggle("active", x.getAttribute("href") === "#" + e.target.id); });
+        });
+      }, { rootMargin: "0px 0px -70% 0px" });
+      document.querySelectorAll("#lesson h2").forEach(function (h) { obs.observe(h); });
+    }
+  }
+  buildSides();
+
   /* Shrink long titles so each fits on one line; very long ones may still wrap at the minimum size. */
   function fitTitles() {
     document.querySelectorAll("main h1, main h2").forEach(function (h) {
@@ -571,4 +684,54 @@
   fitTitles();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitTitles);
   window.addEventListener("resize", fitTitles);
+
+  /* ---------- movement and feedback ---------- */
+  var calm = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // Celebrate a passed quiz with a short burst of orange and gold confetti.
+  function celebrate() {
+    if (calm) return;
+    var c = document.createElement("canvas");
+    c.className = "confetti";
+    c.width = window.innerWidth; c.height = window.innerHeight;
+    document.body.appendChild(c);
+    var ctx = c.getContext("2d"), colours = ["#e4572e", "#e0a800", "#111111", "#ffffff"], bits = [];
+    for (var i = 0; i < 140; i++) bits.push({ x: c.width / 2, y: c.height * 0.55, vx: (Math.random() - 0.5) * 16, vy: -Math.random() * 16 - 4, s: 5 + Math.random() * 6, r: Math.random() * 6, c: colours[i % colours.length] });
+    var t = 0;
+    (function frame() {
+      ctx.clearRect(0, 0, c.width, c.height);
+      bits.forEach(function (b) { b.vy += 0.45; b.x += b.vx; b.y += b.vy; b.r += 0.2; ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.r); ctx.fillStyle = b.c; ctx.fillRect(-b.s / 2, -b.s / 2, b.s, b.s * 0.6); ctx.restore(); });
+      if (++t < 110) requestAnimationFrame(frame); else c.remove();
+    })();
+  }
+
+  function animate() {
+    // Progress bars fill up from empty, and big percentages count up.
+    document.querySelectorAll(".bar > span").forEach(function (b) {
+      var w = b.style.width; if (calm || !w) return;
+      b.style.width = "0"; requestAnimationFrame(function () { requestAnimationFrame(function () { b.style.width = w; }); });
+    });
+    document.querySelectorAll(".side-big").forEach(function (el) {
+      var target = parseInt(el.textContent, 10) || 0; if (calm || !target) return;
+      var start = performance.now();
+      (function tick(now) { var k = Math.min(1, (now - start) / 900); el.textContent = Math.round(target * k) + "%"; if (k < 1) requestAnimationFrame(tick); })(start);
+    });
+
+    // Cards and sections slide gently into view as you scroll.
+    if (!calm && "IntersectionObserver" in window) {
+      var items = document.querySelectorAll("main h2, .lesson-item, .panel, .callout, .q, .terms li, .side-card, .level, .table-scroll");
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
+      }, { rootMargin: "0px 0px -8% 0px" });
+      items.forEach(function (el, i) { el.classList.add("reveal"); el.style.transitionDelay = (el.classList.contains("side-card") ? (i % 5) * 70 : 0) + "ms"; io.observe(el); });
+    }
+
+    // Thin reading bar at the top shows how far through the lesson you are.
+    if (page === "lesson") {
+      var rb = document.createElement("div"); rb.className = "read-bar"; document.body.appendChild(rb);
+      var upd = function () { var h = document.documentElement; var k = h.scrollTop / Math.max(1, h.scrollHeight - h.clientHeight); rb.style.transform = "scaleX(" + Math.min(1, Math.max(0, k)) + ")"; };
+      window.addEventListener("scroll", upd, { passive: true }); upd();
+    }
+  }
+  animate();
 })();

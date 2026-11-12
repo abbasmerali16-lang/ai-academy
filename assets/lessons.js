@@ -686,8 +686,8 @@ window.LEVEL1 = [
 <p>For a yes/no prediction (say, "is this email spam?"), every prediction lands in one of four boxes. Together they form a <strong>confusion matrix</strong>:</p>
 <div class="table-scroll"><table>
   <tr><th></th><th>Really spam</th><th>Really not spam</th></tr>
-  <tr><td><b>AI says spam</b></td><td>✅ True positive (caught it)</td><td>⚠️ False positive (false alarm)</td></tr>
-  <tr><td><b>AI says not spam</b></td><td>⚠️ False negative (missed it)</td><td>✅ True negative (correctly left alone)</td></tr>
+  <tr><td><b>AI says spam</b></td><td>True positive (caught it)</td><td>False positive (false alarm)</td></tr>
+  <tr><td><b>AI says not spam</b></td><td>False negative (missed it)</td><td>True negative (correctly left alone)</td></tr>
 </table></div>
 
 <h2>Precision and recall</h2>
