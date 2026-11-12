@@ -1,4 +1,4 @@
-# AI Academy
+# Abbas’ AI Academy
 
 A free, self-paced website for learning artificial intelligence, from beginner to master.
 

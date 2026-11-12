@@ -69,7 +69,7 @@
     var idx = LESSONS.findIndex(function (l) { return l.id === id; });
     if (idx < 0) idx = 0;
     var l = LESSONS[idx];
-    document.title = l.title + " · AI Academy";
+    document.title = l.title + " · Abbas’ AI Academy";
 
     var html =
       '<p class="crumbs"><a href="index.html">Level 1: Foundations</a> › ' + (unitOf(l) ? esc(unitOf(l).title) + " › " : "") + "Lesson " + (idx + 1) + " of " + LESSONS.length + "</p>" +
@@ -557,4 +557,18 @@
   if (page === "home") renderHome();
   else if (page === "lesson") renderLesson();
   else if (page === "glossary") renderGlossary();
+
+  /* Shrink long titles so each fits on one line; very long ones may still wrap at the minimum size. */
+  function fitTitles() {
+    document.querySelectorAll("main h1, main h2").forEach(function (h) {
+      h.style.fontSize = "";
+      h.style.whiteSpace = "nowrap";
+      var size = parseFloat(getComputedStyle(h).fontSize), min = h.tagName === "H1" ? 22 : 20;
+      while (h.scrollWidth > h.clientWidth && size > min) { size -= 1; h.style.fontSize = size + "px"; }
+      h.style.whiteSpace = "";
+    });
+  }
+  fitTitles();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitTitles);
+  window.addEventListener("resize", fitTitles);
 })();
