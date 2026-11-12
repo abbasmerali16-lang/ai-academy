@@ -21,7 +21,7 @@
     if (!el) return;
     var n = doneCount(), t = LESSONS.length, pct = Math.round((n / t) * 100);
     el.innerHTML =
-      '<div class="progress-row"><span>Level 1 progress</span><span>' + n + " of " + t + " lessons · " + pct + "%</span></div>" +
+      '<div class="progress-row"><span>Your Level 1 progress, Abbas</span><span>' + n + " of " + t + " lessons · " + pct + "%</span></div>" +
       '<div class="bar"><span style="width:' + pct + '%"></span></div>';
   }
 
@@ -49,17 +49,17 @@
     var start = $("#start-btn");
     if (next) {
       start.href = "lesson.html?id=" + next.id;
-      start.textContent = doneCount() ? "Continue: " + next.title : "Start Lesson 1";
+      start.textContent = doneCount() ? "Welcome back, Abbas. Continue: " + next.title : "Start Lesson 1";
     } else {
       start.href = "#certificate";
-      start.textContent = "Level 1 complete 🎉";
+      start.textContent = "Level 1 complete, Abbas 🎉";
     }
     var cert = $("#certificate");
     if (cert) cert.hidden = !!next;
 
     var reset = $("#reset");
     if (reset) reset.onclick = function () {
-      if (confirm("Reset all Level 1 progress in this browser?")) { progress = {}; save(progress); renderHome(); }
+      if (confirm("Abbas, reset all your Level 1 progress in this browser?")) { progress = {}; save(progress); renderHome(); }
     };
   }
 
@@ -127,7 +127,7 @@
           if (oi !== item.answer) b.classList.add("wrong"); else correct++;
           var ex = document.createElement("div");
           ex.className = "explain";
-          ex.textContent = (oi === item.answer ? "Correct. " : "Not quite. ") + item.explain;
+          ex.textContent = (oi === item.answer ? "Correct, Abbas. " : "Not quite, Abbas. ") + item.explain;
           q.appendChild(ex);
           answered++;
           if (answered === l.quiz.length) finish();
@@ -144,13 +144,13 @@
       save(progress);
       var r = $("#quiz-result");
       r.innerHTML = '<div class="result ' + (passed ? "pass" : "fail") + '">' +
-        "You scored " + correct + " / " + l.quiz.length + ". " +
-        (passed ? "Lesson complete! ✓" : "Have another read and try again.") + "</div>" +
+        "Abbas, you scored " + correct + " / " + l.quiz.length + ". " +
+        (passed ? "Lesson complete, well done! ✓" : "Have another read and try again. You've got this.") + "</div>" +
         (passed ? "" : '<button class="btn secondary" type="button" id="retry">Retry quiz</button>');
       var retry = $("#retry");
       if (retry) retry.onclick = function () { $("#questions").innerHTML = ""; r.innerHTML = ""; renderQuiz(l); };
       if (passed && doneCount() === LESSONS.length) {
-        r.innerHTML += '<div class="result pass">🎓 You finished every Level 1 lesson. <a href="index.html#certificate">See your completion badge</a>.</div>';
+        r.innerHTML += '<div class="result pass">🎓 Congratulations, Abbas! You\'ve finished every Level 1 lesson. <a href="index.html#certificate">See your completion badge</a>.</div>';
       }
     }
   }
