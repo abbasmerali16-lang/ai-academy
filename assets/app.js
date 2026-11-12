@@ -775,6 +775,48 @@
   }
   buildSides();
 
+  /* Footer with grouped, clearly labelled links (same on every page). */
+  function buildFooter() {
+    var f = document.getElementById("site-footer");
+    if (!f) return;
+    var UNITS = window.LEVEL1_UNITS || [];
+    var next = LESSONS.find(function (l) { return !isDone(l.id); });
+    f.innerHTML = '<div class="foot-grid">' +
+      '<div class="foot-brand"><p class="foot-name">Abbas’ AI Academy</p><p>Your path from AI beginner to master, one short lesson at a time.</p><p class="foot-note">Your progress is saved in this browser only.</p></div>' +
+      '<div><p class="foot-head">Learn</p><ul><li><a href="index.html">Home</a></li><li><a href="index.html#lessons">All 16 lessons</a></li><li><a href="glossary.html">Glossary</a></li>' +
+        (next ? '<li><a href="lesson.html?id=' + next.id + '">Next lesson: ' + esc(next.title) + "</a></li>" : "") + "</ul></div>" +
+      '<div><p class="foot-head">Level 1 units</p><ul>' + UNITS.map(function (u, i) {
+        var first = LESSONS.find(function (l) { return l.unit === u.id; });
+        return '<li><a href="lesson.html?id=' + first.id + '">' + (i + 1) + ". " + esc(u.title.replace(/^Unit \d+ · /, "")) + "</a></li>";
+      }).join("") + "</ul></div>" +
+      '<div><p class="foot-head">Your road</p><ul class="foot-plain"><li>Level 1: Foundations <span class="foot-tag">Now</span></li><li>Level 2: Data and Python</li><li>Level 3: Machine learning</li><li>Level 4: Deep learning and LLMs</li><li>Level 5: Mastery</li></ul></div>' +
+      "</div>" + '<div class="foot-bottom">Every lesson lists its sources so you can check the facts.</div>';
+  }
+  buildFooter();
+
+  /* Menu button for smaller screens, where the left-hand menu is hidden. */
+  function initMenu() {
+    var head = document.querySelector(".site-header .wrap");
+    if (!head || document.querySelector(".menu-btn")) return;
+    var btn = document.createElement("button");
+    btn.className = "menu-btn"; btn.type = "button"; btn.setAttribute("aria-expanded", "false"); btn.setAttribute("aria-controls", "drawer");
+    btn.innerHTML = '<span class="menu-icon" aria-hidden="true"></span>Menu';
+    head.insertBefore(btn, head.firstChild);
+    var drawer = document.createElement("div"); drawer.id = "drawer"; drawer.className = "drawer"; drawer.hidden = true;
+    document.body.appendChild(drawer);
+    function close() { drawer.hidden = true; document.body.classList.remove("menu-open"); btn.setAttribute("aria-expanded", "false"); }
+    btn.onclick = function () {
+      if (!drawer.hidden) return close();
+      drawer.innerHTML = '<div class="drawer-panel">' + navTab() + "</div>";
+      drawer.hidden = false; document.body.classList.add("menu-open"); btn.setAttribute("aria-expanded", "true");
+      var here = drawer.querySelector(".here a, a.here"); if (here) here.focus(); else { var a = drawer.querySelector("a"); if (a) a.focus(); }
+    };
+    drawer.addEventListener("click", function (e) { if (e.target === drawer || e.target.closest("a")) close(); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !drawer.hidden) { close(); btn.focus(); } });
+  }
+  initMenu();
+  document.querySelectorAll(".nav a.active").forEach(function (a) { a.setAttribute("aria-current", "page"); });
+
   /* Shrink long titles so each fits on one line; very long ones may still wrap at the minimum size. */
   function fitTitles() {
     document.querySelectorAll("main h1, main h2, .hero-band h1").forEach(function (h) {

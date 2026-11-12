@@ -5,13 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Abbas’ AI Academy</title>
 <meta name="description" content="Learn artificial intelligence from beginner to master, one level at a time.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234f46e5'/%3E%3Ctext x='16' y='21' font-size='14' font-family='sans-serif' font-weight='700' text-anchor='middle' fill='white'%3EAI%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23178582'/%3E%3Ctext x='16' y='21' font-size='14' font-family='sans-serif' font-weight='700' text-anchor='middle' fill='white'%3EAI%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Carlito:ital,wght@0,400;0,700;1,400&family=Oswald:wght@600;700&display=swap">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body data-page="home">
+<a class="skip" href="#main">Skip to content</a>
 <header class="site-header"><div class="wrap">
   <a class="brand" href="index.html"><span class="brand-mark">AI</span><span class="name">Abbas’ AI Academy</span></a>
   <nav class="nav"><a href="index.html" class="active">Courses</a><a href="glossary.html">Glossary</a></nav>
@@ -24,7 +25,7 @@
       <p class="lead">Abbas, this academy was built just for you. Sixteen short lessons take you from "what is AI?" to using it well and knowing the rules. No maths or coding needed.</p>
       <form class="hero-search" id="hero-search" role="search" autocomplete="off">
         <label class="sr-only" for="hero-q">Search lessons and key terms</label>
-        <input id="hero-q" type="search" placeholder="Search lessons and terms, e.g. neural networks">
+        <input id="hero-q" type="search" placeholder="Search lessons and key terms">
         <button class="btn" type="submit">Search</button>
       </form>
       <div class="topic-slider" aria-label="Popular topics">
@@ -43,7 +44,7 @@
   </div>
 </section>
 <div class="stats-band"><dl class="stats" id="stats"></dl></div>
-<main class="wrap">
+<main class="wrap" id="main">
   <nav class="jump" aria-label="On this page"><a href="#units">Units</a><a href="#how">How it works</a><a href="#lessons">All lessons</a><a href="#road">Your road</a><a href="#faq">Questions</a></nav>
 
   <section id="units">
@@ -108,7 +109,7 @@
 
   <p style="margin-top:32px"><button class="btn secondary" type="button" id="reset">Reset my progress</button></p>
 </main>
-<footer><div class="wrap">Abbas’ AI Academy · Level 1: Foundations. Your progress is saved in this browser only.</div></footer>
+<footer class="site-footer" id="site-footer"></footer>
 <script src="assets/lessons.js"></script>
 <script src="assets/app.js"></script>
 </body></html>
