@@ -397,3 +397,16 @@ body { background: #1d1f24 radial-gradient(circle at 20% 0%, rgba(228,87,46,.25)
 /* Key-point notes (One-line definition, Takeaway, Tip...): no box, just italic text */
 .callout { border: 0; border-radius: 0; background: none; padding: 0; margin: 18px 0; font-style: italic; }
 .callout b { font-style: normal; }
+
+/* Spam game: two mailboxes */
+.mailboxes { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0; }
+@media (max-width: 560px) { .mailboxes { grid-template-columns: 1fr; } }
+.mailbox { border: 2px solid var(--border); padding: 10px 12px; min-width: 0; }
+.mailbox.junk { background: var(--surface-2); }
+.mailbox h4 { margin: 0 0 6px; font: 700 16px/1.2 Oswald, "Arial Narrow", sans-serif; text-transform: uppercase; letter-spacing: .04em; }
+.mailbox .box-count { color: var(--muted); }
+.mailbox .mailrow { margin: 0; min-height: 52px; }
+.mail, .mail.flagged { background: #fff; color: var(--text); border-color: var(--border); }
+.mail.wrong { border-color: #c62828; background: #fdecea; color: #b71c1c; }
+.mail.wrong small { color: #b71c1c; }
+.mailbox .empty { color: var(--muted); font-size: 15px; }

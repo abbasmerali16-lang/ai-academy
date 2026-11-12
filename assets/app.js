@@ -454,23 +454,36 @@
       // [spam score 0-100, actually spam?]
       var mail = [[97, 1], [93, 1], [88, 1], [85, 0], [81, 1], [76, 1], [72, 0], [68, 1], [63, 0], [58, 1], [55, 0], [49, 0], [44, 1], [40, 0], [35, 0], [28, 0], [22, 0], [15, 0], [9, 0], [4, 0]];
       el.className = "panel";
-      el.innerHTML = "<h3>Try it: set the spam threshold</h3><p>Twenty emails, each given a spam score by an AI. Red outline = really spam. Emails at or above the threshold go to junk.</p>" +
-        '<label class="slider-row"><span>Threshold</span><input type="range" min="0" max="100" step="1" value="60"><output></output></label>' +
-        '<div class="mailrow"></div><div class="neuron-out" aria-live="polite"></div>';
-      var row = el.querySelector(".mailrow");
+      el.innerHTML = "<h3>Try it: set the spam threshold</h3>" +
+        "<p>Abbas, an AI has looked at 20 emails and given each one a score from 0 to 100 for how spammy it seems. Some really are spam and some are genuine emails. You choose the cut-off: any email scoring at or above it goes to <b>Junk</b>, and the rest stay in your <b>Inbox</b>.</p>" +
+        "<p>Move the slider and watch what happens. Emails in the wrong place turn red: spam that got into your inbox, or a real email sent to junk.</p>" +
+        '<label class="slider-row"><span>Cut-off</span><input type="range" min="0" max="100" step="1" value="60" aria-label="Spam cut-off"><output></output></label>' +
+        '<div class="mailboxes"><div class="mailbox"><h4>Inbox <span class="box-count" data-box="in"></span></h4><div class="mailrow" data-box="in"></div></div>' +
+        '<div class="mailbox junk"><h4>Junk <span class="box-count" data-box="junk"></span></h4><div class="mailrow" data-box="junk"></div></div></div>' +
+        '<div class="neuron-out" aria-live="polite"></div>';
+      var inbox = el.querySelector('.mailrow[data-box="in"]'), junk = el.querySelector('.mailrow[data-box="junk"]');
+      function chip(m, flag) {
+        var wrong = flag !== !!m[1];
+        return '<span class="mail' + (wrong ? " wrong" : "") + '" title="AI score ' + m[0] + '">' + (m[1] ? "SPAM" : "REAL") + "<small>" + m[0] + "</small></span>";
+      }
       function update() {
         var t = parseInt(el.querySelector("input").value, 10);
         el.querySelector("output").textContent = t;
-        var tp = 0, fp = 0, fn = 0, tn = 0;
-        row.innerHTML = mail.map(function (m) {
+        var tp = 0, fp = 0, fn = 0, tn = 0, inH = "", junkH = "";
+        mail.forEach(function (m) {
           var flag = m[0] >= t;
           if (flag && m[1]) tp++; else if (flag) fp++; else if (m[1]) fn++; else tn++;
-          return '<span class="mail' + (m[1] ? " spam" : "") + (flag ? " flagged" : "") + '" title="score ' + m[0] + '">' + (flag ? "BIN" : "MAIL") + "<small>" + m[0] + "</small></span>";
-        }).join("");
+          if (flag) junkH += chip(m, true); else inH += chip(m, false);
+        });
+        inbox.innerHTML = inH || '<em class="empty">Empty</em>';
+        junk.innerHTML = junkH || '<em class="empty">Empty</em>';
+        el.querySelector('.box-count[data-box="in"]').textContent = "(" + (fn + tn) + ")";
+        el.querySelector('.box-count[data-box="junk"]').textContent = "(" + (tp + fp) + ")";
         var prec = tp + fp ? Math.round(100 * tp / (tp + fp)) : 100, rec = Math.round(100 * tp / (tp + fn));
         el.querySelector(".neuron-out").innerHTML =
-          "Caught (true positives): <b>" + tp + "</b> · False alarms: <b>" + fp + "</b> · Missed spam: <b>" + fn + "</b> · Correctly left alone: <b>" + tn + "</b><br>" +
-          "Accuracy <strong>" + Math.round(100 * (tp + tn) / mail.length) + "%</strong> · Precision <strong>" + prec + "%</strong> · Recall <strong>" + rec + "%</strong>";
+          "Spam caught: <b>" + tp + " of " + (tp + fn) + "</b> · Spam that got through: <b>" + fn + "</b> · Real emails wrongly sent to junk: <b>" + fp + "</b><br>" +
+          "<b>Precision " + prec + "%</b>: of the emails in Junk, how many really are spam. " +
+          "<b>Recall " + rec + "%</b>: of all the spam, how much ended up in Junk.";
       }
       el.addEventListener("input", update);
       update();
