@@ -1,21 +1,22 @@
 :root {
   color-scheme: light;
-  --bg: #fffaf0;            /* warm cream page */
+  --bg: #ffffff;            /* pure white page */
   --surface: #ffffff;
-  --surface-2: #fbf1dc;     /* pale gold tint */
-  --text: #3b2a1c;          /* dark brown body text */
-  --muted: #6d5a48;
-  --heading: #7a2e0b;       /* deep rust headings */
-  --border: #ecdcb8;
-  --gold: #d4a62a;
-  --accent: #c2410c;        /* burnt orange: top bar, labels, links */
-  --accent-soft: #fdf0d5;
+  --surface-2: #f4f4f2;     /* light grey panels */
+  --text: #1a1a1a;          /* near-black body text */
+  --muted: #4d4d4d;
+  --heading: #111111;
+  --border: #d9d9d6;
+  --gold: #e0a800;          /* strong yellow-gold: highlights, progress */
+  --accent: #e4572e;        /* bright orange: buttons, header edge, badges */
+  --accent-text: #c4421d;   /* darker orange for small text and links */
+  --accent-soft: #fff4d6;
   --good: #15803d;
   --good-soft: #dcfce7;
   --bad: #b91c1c;
   --bad-soft: #fee2e2;
-  --radius: 14px;
-  --shadow: 0 1px 2px rgba(120, 80, 20, .06), 0 6px 20px rgba(120, 80, 20, .06);
+  --radius: 4px;
+  --shadow: none;
 }
 
 * { box-sizing: border-box; }
@@ -266,3 +267,22 @@ footer { border-top: 3px solid var(--gold); margin-top: 48px; padding: 24px 0 40
 
 /* Centred hero buttons to sit under the centred title */
 .hero .actions { justify-content: center; }
+
+/* Crisp black-and-orange theme */
+.site-header { background: #111111; border-bottom: 5px solid var(--accent); }
+.brand-mark { background: var(--accent); color: #111; border-radius: 3px; }
+.nav a.active, .nav a:hover { text-decoration-color: var(--gold); }
+main h2 { border-left: 6px solid var(--accent); padding-left: 12px; }
+.unit-head h3 { border-left: 0; }
+.eyebrow, .callout b, .timeline b, a { color: var(--accent-text); }
+.btn { background: #cc4a1c; border-color: #cc4a1c; color: #fff; border-radius: 3px; }
+.btn:hover { background: #a83a13; border-color: #a83a13; }
+.btn.secondary { background: #fff; color: #111; border: 2px solid #111; }
+.lesson-item a, .progress-card, .panel, .q, .level, .terms li { border-radius: 4px; box-shadow: none; border: 1px solid var(--border); }
+.lesson-item a:hover, .level.current { border-color: var(--accent); }
+.lesson-num { border-radius: 3px; background: #111; color: var(--gold); }
+.callout { border-radius: 0; border-left: 5px solid var(--gold); background: #fff8e1; }
+.bar > span { background: var(--gold); }
+.cert { border: 3px solid var(--accent); border-radius: 4px; }
+footer { background: #111; color: #ccc; border-top: 5px solid var(--gold); }
+.cert h2, .quiz h2 { border-left: 0; padding-left: 0; }
