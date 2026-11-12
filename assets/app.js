@@ -21,7 +21,7 @@
     if (!el) return;
     var n = doneCount(), t = LESSONS.length, pct = Math.round((n / t) * 100);
     el.innerHTML =
-      '<div class="progress-row"><span>Level 1 progress</span><span>' + n + " of " + t + " lessons · " + pct + "%</span></div>" +
+      '<div class="progress-row"><span>Your Level 1 progress, Abbas</span><span>' + n + " of " + t + " lessons · " + pct + "%</span></div>" +
       '<div class="bar"><span style="width:' + pct + '%"></span></div>';
   }
 
@@ -49,17 +49,17 @@
     var start = $("#start-btn");
     if (next) {
       start.href = "lesson.html?id=" + next.id;
-      start.textContent = doneCount() ? "Continue: " + next.title : "Start Lesson 1";
+      start.textContent = doneCount() ? "Welcome back, Abbas. Continue: " + next.title : "Start Lesson 1";
     } else {
       start.href = "#certificate";
-      start.textContent = "Level 1 complete 🎉";
+      start.textContent = "Level 1 complete, Abbas 🎉";
     }
     var cert = $("#certificate");
     if (cert) cert.hidden = !!next;
 
     var reset = $("#reset");
     if (reset) reset.onclick = function () {
-      if (confirm("Reset all Level 1 progress in this browser?")) { progress = {}; save(progress); renderHome(); }
+      if (confirm("Abbas, reset all your Level 1 progress in this browser?")) { progress = {}; save(progress); renderHome(); }
     };
   }
 
@@ -69,7 +69,7 @@
     var idx = LESSONS.findIndex(function (l) { return l.id === id; });
     if (idx < 0) idx = 0;
     var l = LESSONS[idx];
-    document.title = l.title + " · AI Academy";
+    document.title = l.title + " · Abbas’ AI Academy";
 
     var html =
       '<p class="crumbs"><a href="index.html">Level 1: Foundations</a> › ' + (unitOf(l) ? esc(unitOf(l).title) + " › " : "") + "Lesson " + (idx + 1) + " of " + LESSONS.length + "</p>" +
@@ -127,7 +127,7 @@
           if (oi !== item.answer) b.classList.add("wrong"); else correct++;
           var ex = document.createElement("div");
           ex.className = "explain";
-          ex.textContent = (oi === item.answer ? "Correct. " : "Not quite. ") + item.explain;
+          ex.textContent = (oi === item.answer ? "Correct, Abbas. " : "Not quite, Abbas. ") + item.explain;
           q.appendChild(ex);
           answered++;
           if (answered === l.quiz.length) finish();
@@ -144,13 +144,13 @@
       save(progress);
       var r = $("#quiz-result");
       r.innerHTML = '<div class="result ' + (passed ? "pass" : "fail") + '">' +
-        "You scored " + correct + " / " + l.quiz.length + ". " +
-        (passed ? "Lesson complete! ✓" : "Have another read and try again.") + "</div>" +
+        "Abbas, you scored " + correct + " / " + l.quiz.length + ". " +
+        (passed ? "Lesson complete, well done! ✓" : "Have another read and try again. You've got this.") + "</div>" +
         (passed ? "" : '<button class="btn secondary" type="button" id="retry">Retry quiz</button>');
       var retry = $("#retry");
       if (retry) retry.onclick = function () { $("#questions").innerHTML = ""; r.innerHTML = ""; renderQuiz(l); };
       if (passed && doneCount() === LESSONS.length) {
-        r.innerHTML += '<div class="result pass">🎓 You finished every Level 1 lesson. <a href="index.html#certificate">See your completion badge</a>.</div>';
+        r.innerHTML += '<div class="result pass">🎓 Congratulations, Abbas! You\'ve finished every Level 1 lesson. <a href="index.html#certificate">See your completion badge</a>.</div>';
       }
     }
   }
@@ -557,4 +557,18 @@
   if (page === "home") renderHome();
   else if (page === "lesson") renderLesson();
   else if (page === "glossary") renderGlossary();
+
+  /* Shrink long titles so each fits on one line; very long ones may still wrap at the minimum size. */
+  function fitTitles() {
+    document.querySelectorAll("main h1, main h2").forEach(function (h) {
+      h.style.fontSize = "";
+      h.style.whiteSpace = "nowrap";
+      var size = parseFloat(getComputedStyle(h).fontSize), min = h.tagName === "H1" ? 22 : 20;
+      while (h.scrollWidth > h.clientWidth && size > min) { size -= 1; h.style.fontSize = size + "px"; }
+      h.style.whiteSpace = "";
+    });
+  }
+  fitTitles();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitTitles);
+  window.addEventListener("resize", fitTitles);
 })();
