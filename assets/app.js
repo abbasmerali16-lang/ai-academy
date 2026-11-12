@@ -558,6 +558,90 @@
   else if (page === "lesson") renderLesson();
   else if (page === "glossary") renderGlossary();
 
+  /* ---------- side panels (wide screens only) ---------- */
+  function allTerms() {
+    var all = [];
+    LESSONS.forEach(function (l, i) { l.terms.forEach(function (t) { all.push({ term: t[0], def: t[1], lesson: l, n: i + 1 }); }); });
+    return all;
+  }
+  function termOfTheDay() {
+    var all = allTerms(), day = Math.floor(Date.now() / 86400000);
+    return all[day % all.length];
+  }
+  function card(title, body) { return '<section class="side-card"><h4>' + title + "</h4>" + body + "</section>"; }
+  function progressCard() {
+    var n = doneCount(), t = LESSONS.length, pct = Math.round((n / t) * 100);
+    var next = LESSONS.find(function (l) { return !isDone(l.id); });
+    return card("Your progress",
+      '<div class="side-big">' + pct + '%</div><div class="bar"><span style="width:' + pct + '%"></span></div>' +
+      '<p class="side-small">' + n + " of " + t + " lessons done</p>" +
+      (next ? '<p class="side-small">Next up: <a href="lesson.html?id=' + next.id + '">' + esc(next.title) + "</a></p>" : "<p class=\"side-small\">Level 1 complete. Brilliant work, Abbas.</p>"));
+  }
+  function termCard() {
+    var t = termOfTheDay();
+    return card("Term of the day", '<p class="side-term">' + esc(t.term) + '</p><p class="side-small">' + esc(t.def) + '</p><p class="side-small"><a href="lesson.html?id=' + t.lesson.id + '">From Lesson ' + t.n + "</a></p>");
+  }
+
+  function buildSides() {
+    var main = document.querySelector("main");
+    if (!main) return;
+    var left = "", right = "";
+    if (page === "home") {
+      var units = (window.LEVEL1_UNITS || []);
+      document.querySelectorAll(".unit-head").forEach(function (h, i) { h.id = "unit-" + (i + 1); });
+      left = progressCard() + card("Jump to a unit", '<ol class="side-list">' + units.map(function (u, i) {
+        var ls = LESSONS.filter(function (l) { return l.unit === u.id; }), d = ls.filter(function (l) { return isDone(l.id); }).length;
+        return '<li><a href="#unit-' + (i + 1) + '">' + esc(u.title.replace(/^Unit \d+ · /, "")) + '</a><span class="side-count">' + d + "/" + ls.length + "</span></li>";
+      }).join("") + "</ol>");
+      right = termCard() + card("How each lesson works",
+        '<ul class="side-steps"><li><b>Read</b> for about 10 to 13 minutes</li><li><b>Try</b> the hands-on activity</li><li><b>Pass</b> the short quiz to tick it off</li><li><b>Dig deeper</b> with the listed sources</li></ul>');
+    } else if (page === "lesson") {
+      var art = document.getElementById("lesson");
+      var heads = art.querySelectorAll("h2");
+      heads.forEach(function (h, i) { h.id = "sec-" + (i + 1); });
+      var id = new URLSearchParams(location.search).get("id");
+      var l = LESSONS.find(function (x) { return x.id === id; }) || LESSONS[0];
+      var unitLessons = LESSONS.filter(function (x) { return x.unit === l.unit; });
+      left = card("In this lesson", '<ol class="side-list side-toc">' + Array.prototype.map.call(heads, function (h) {
+        return '<li><a href="#' + h.id + '">' + esc(h.textContent) + "</a></li>";
+      }).join("") + "</ol>") +
+        card(unitOf(l) ? esc(unitOf(l).title) : "This unit", '<ol class="side-list">' + unitLessons.map(function (x) {
+          var n = LESSONS.indexOf(x) + 1;
+          return '<li class="' + (x === l ? "here" : "") + '"><a href="lesson.html?id=' + x.id + '">' + n + ". " + esc(x.title) + "</a>" + (isDone(x.id) ? '<span class="side-tick">✓</span>' : "") + "</li>";
+        }).join("") + "</ol>");
+      right = card("Key terms", '<dl class="side-terms">' + l.terms.slice(0, 8).map(function (t) {
+        return "<dt>" + esc(t[0]) + "</dt><dd>" + esc(t[1]) + "</dd>";
+      }).join("") + "</dl>" + (l.terms.length > 8 ? '<p class="side-small"><a href="#sec-' + heads.length + '">See all ' + l.terms.length + " terms</a></p>" : "")) + progressCard();
+    } else if (page === "glossary") {
+      var letters = {};
+      document.querySelectorAll("#gloss dt").forEach(function (dt) {
+        var c = dt.textContent.charAt(0).toUpperCase();
+        if (!letters[c]) { letters[c] = true; dt.id = "letter-" + c; }
+      });
+      left = card("Jump to a letter", '<div class="side-letters">' + Object.keys(letters).map(function (c) { return '<a href="#letter-' + c + '">' + c + "</a>"; }).join("") + "</div>");
+      right = termCard() + progressCard();
+    }
+    var layout = document.createElement("div");
+    layout.className = "layout";
+    main.parentNode.insertBefore(layout, main);
+    var a = document.createElement("aside"); a.className = "side side-left"; a.innerHTML = left;
+    var b = document.createElement("aside"); b.className = "side side-right"; b.innerHTML = right;
+    layout.appendChild(a); layout.appendChild(main); layout.appendChild(b);
+
+    // Highlight the section being read in the lesson outline.
+    var toc = document.querySelectorAll(".side-toc a");
+    if (toc.length && "IntersectionObserver" in window) {
+      var obs = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (!e.isIntersecting) return;
+          toc.forEach(function (x) { x.classList.toggle("active", x.getAttribute("href") === "#" + e.target.id); });
+        });
+      }, { rootMargin: "0px 0px -70% 0px" });
+      document.querySelectorAll("#lesson h2").forEach(function (h) { obs.observe(h); });
+    }
+  }
+  buildSides();
+
   /* Shrink long titles so each fits on one line; very long ones may still wrap at the minimum size. */
   function fitTitles() {
     document.querySelectorAll("main h1, main h2").forEach(function (h) {
