@@ -1,6 +1,33 @@
 (function () {
   "use strict";
-  var LESSONS = window.LEVEL1 || [];
+  /* ---------- levels ---------- */
+  // Each level's lessons live in their own file (lessons.js for Level 1, level2.js, ...).
+  // A level with no lessons loaded yet shows as "coming soon".
+  var LEVELS = [
+    { n: 1, name: "Foundations", key: "LEVEL1", what: "what AI is, how it reasons and learns, and how to use it well and within the rules", lead: "Sixteen short lessons take you from \"what is AI?\" to using it well and knowing the rules. No maths or coding needed.", cert: "You've finished AI Foundations. You can explain what AI is, how it reasons and learns, how to judge whether it's any good, how chatbots and other AI tools work, and how to use AI responsibly and within the rules." },
+    { n: 2, name: "Data and Python", key: "LEVEL2", lead: "Sixteen lessons take you from your first line of Python to exploring a real dataset, with the statistics and gentle maths that AI is built on. You can run real code right in the page.", cert: "You've finished Data and Python. You can write and read Python, load, clean and summarise data with NumPy and pandas, describe it with statistics and charts, and explain the maths ideas that machine learning rests on." },
+    { n: 3, name: "Machine learning in practice", key: "LEVEL3", lead: "Sixteen lessons on building real machine learning models with scikit-learn: framing problems, the main model families, measuring and improving them, and making them fair and explainable.", cert: "You've finished Machine learning in practice. You can frame a problem, prepare data, train and compare models, tune and evaluate them honestly, and explain and check them for fairness." },
+    { n: 4, name: "Deep learning and LLMs", key: "LEVEL4", lead: "Sixteen lessons inside modern AI: how neural networks really train, attention and transformers, how large language models are built, and image generators, retrieval and agents.", cert: "You've finished Deep learning and LLMs. You can explain how neural networks train, how transformers and large language models work, and how image generators, retrieval and agents are built." },
+    { n: 5, name: "Mastery: build and deploy", key: "LEVEL5", lead: "Sixteen lessons on building, shipping and governing real AI systems: AI APIs, retrieval and agents, deployment and monitoring, security, governance and reading research.", cert: "You've completed the whole academy. You can design, build, evaluate, deploy, secure and govern AI systems, and keep learning from the research frontier." }
+  ];
+  LEVELS.forEach(function (m) {
+    m.lessons = window[m.key] || [];
+    m.units = window[m.key + "_UNITS"] || [];
+    m.ready = m.lessons.length > 0;
+    m.lessons.forEach(function (l, i) { l.level = m.n; l.num = i + 1; });
+  });
+  var READY = LEVELS.filter(function (m) { return m.ready; });
+  var ALL = [].concat.apply([], READY.map(function (m) { return m.lessons; }));
+  var LV = READY[0], LESSONS = LV.lessons, UNITS = LV.units;
+  function setLevel(m) { LV = m; LESSONS = m.lessons; UNITS = m.units; }
+  function levelOf(l) { return LEVELS[l.level - 1]; }
+  function lessonById(id) { return ALL.find(function (l) { return l.id === id; }); }
+  function lessonTag(l) { return l.level > 1 ? l.level + "." + l.num : String(l.num); }
+  // Addresses of pages (the Claude-hosted copy swaps these for in-page links).
+  function lessonHref(id) { return "lesson.html?id=" + id; }
+  function levelHref(n) { return n > 1 ? "index.html?level=" + n : "index.html"; }
+  function currentLessonId() { return new URLSearchParams(location.search).get("id"); }
+  function requestedLevel() { return parseInt(new URLSearchParams(location.search).get("level"), 10) || 0; }
   var KEY = "aiAcademy.level1.v1";
 
   /* ---------- progress (saved in this browser only) ---------- */
@@ -13,6 +40,14 @@
   var progress = load();
   function isDone(id) { return !!(progress[id] && progress[id].passed); }
   function doneCount() { return LESSONS.filter(function (l) { return isDone(l.id); }).length; }
+  function nextAll() { return ALL.find(function (l) { return !isDone(l.id); }); }
+  // The level to show: the one asked for, else the one holding your next lesson.
+  function pickLevel() {
+    var want = LEVELS[requestedLevel() - 1];
+    if (want && want.ready) return want;
+    var nx = nextAll();
+    return nx ? levelOf(nx) : READY[READY.length - 1];
+  }
 
   function $(sel, root) { return (root || document).querySelector(sel); }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
@@ -21,15 +56,16 @@
     if (!el) return;
     var n = doneCount(), t = LESSONS.length, pct = Math.round((n / t) * 100);
     el.innerHTML =
-      '<div class="progress-row"><span>Your Level 1 progress, Abbas</span><span>' + n + " of " + t + " lessons · " + pct + "%</span></div>" +
+      '<div class="progress-row"><span>Your Level ' + LV.n + ' progress, Abbas</span><span>' + n + " of " + t + " lessons · " + pct + "%</span></div>" +
       '<div class="bar"><span style="width:' + pct + '%"></span></div>';
   }
 
   /* ---------- home page ---------- */
   function renderHome() {
+    setLevel(pickLevel());
+    renderLevelCopy();
     renderProgress($("#progress"));
     var list = $("#lesson-list");
-    var UNITS = window.LEVEL1_UNITS || [];
     var lastUnit = null;
     list.innerHTML = LESSONS.map(function (l, i) {
       var done = isDone(l.id);
@@ -39,7 +75,7 @@
         var u = UNITS.find(function (x) { return x.id === l.unit; });
         if (u) head = '<li class="unit-head"><h3>' + esc(u.title) + "</h3><p>" + esc(u.blurb) + "</p></li>";
       }
-      return head + '<li class="lesson-item' + (done ? " done" : "") + '"><a href="lesson.html?id=' + l.id + '">' +
+      return head + '<li class="lesson-item' + (done ? " done" : "") + '"><a href="' + lessonHref(l.id) + '">' +
         '<span class="lesson-num">' + (done ? "✓" : i + 1) + "</span>" +
         '<span class="lesson-text"><strong>' + esc(l.title) + "</strong><span>" + esc(l.summary) + "</span></span>" +
         '<span class="lesson-meta">' + l.minutes + " min</span></a></li>";
@@ -48,11 +84,11 @@
     var next = LESSONS.find(function (l) { return !isDone(l.id); });
     var start = $("#start-btn");
     if (next) {
-      start.href = "lesson.html?id=" + next.id;
-      start.textContent = doneCount() ? "Welcome back, Abbas. Continue: " + next.title : "Start Lesson 1";
+      start.href = lessonHref(next.id);
+      start.textContent = doneCount() ? "Welcome back, Abbas. Continue: " + next.title : (LV.n > 1 ? "Start Level " + LV.n + ", Lesson 1" : "Start Lesson 1");
     } else {
       start.href = "#certificate";
-      start.textContent = "Level 1 complete, Abbas";
+      start.textContent = "Level " + LV.n + " complete, Abbas";
     }
     var cert = $("#certificate");
     if (cert) cert.hidden = !!next;
@@ -60,13 +96,35 @@
 
     var reset = $("#reset");
     if (reset) reset.onclick = function () {
-      if (confirm("Abbas, reset all your Level 1 progress in this browser?")) { progress = {}; save(progress); renderHome(); }
+      if (confirm("Abbas, reset all your progress, on every level, in this browser?")) { progress = {}; save(progress); renderHome(); }
     };
   }
 
   /* Home page landing sections: hero card, numbers strip, unit cards, closing call to action. */
+  /* Home page wording and the road of levels, for whichever level is showing. */
+  function renderLevelCopy() {
+    var set = function (id, html) { var el = document.getElementById(id); if (el) el.innerHTML = html; };
+    var title = "Level " + LV.n + " · " + esc(LV.name);
+    set("hero-eyebrow", "Welcome, Abbas · " + title);
+    set("hero-lead", "Abbas, this academy was built just for you. " + esc(LV.lead));
+    set("units-kicker", title);
+    set("units-title", ["", "One", "Two", "Three", "Four", "Five", "Six"][UNITS.length] + " units. One clear path.");
+    set("lessons-kicker", "All " + LESSONS.length + " lessons");
+    set("lessons-title", "Your Level " + LV.n + " lessons");
+    set("cert-big", "LEVEL " + LV.n);
+    set("cert-title", "Well done, Abbas: Level " + LV.n + " complete");
+    set("cert-text", esc(LV.cert) + (LEVELS[LV.n] && LEVELS[LV.n].ready ? ' <a href="' + levelHref(LV.n + 1) + '">On to Level ' + (LV.n + 1) + ": " + esc(LEVELS[LV.n].name) + " →</a>" : ""));
+    set("road-kicker", "All five levels");
+    set("levels", LEVELS.map(function (m) {
+      var d = m.lessons.filter(function (l) { return isDone(l.id); }).length;
+      var state = m === LV ? "current" : (m.ready ? "open" : "locked");
+      var label = m === LV ? "You are here" : (m.ready ? (d === m.lessons.length ? "Complete" : d ? d + " of " + m.lessons.length + " done" : "Available now") : "Coming soon");
+      var inner = "<b>Level " + m.n + "</b>" + esc(m.name) + "<br><span>" + label + "</span>";
+      return m.ready ? '<a class="level ' + state + '" href="' + levelHref(m.n) + '">' + inner + "</a>" : '<div class="level locked">' + inner + "</div>";
+    }).join(""));
+  }
+
   function renderLanding(next) {
-    var UNITS = window.LEVEL1_UNITS || [];
     var mins = LESSONS.reduce(function (a, l) { return a + l.minutes; }, 0);
     var terms = LESSONS.reduce(function (a, l) { return a + l.terms.length; }, 0);
     var n = doneCount(), pct = Math.round(100 * n / LESSONS.length);
@@ -77,10 +135,10 @@
     if (hv) {
       var l = next || LESSONS[LESSONS.length - 1], i = LESSONS.indexOf(l);
       hv.innerHTML = '<div class="hv-card">' +
-        '<span class="hv-label">' + (next ? (n ? "Continue where you left off" : "Your first lesson") : "Level 1 complete") + "</span>" +
+        '<span class="hv-label">' + (next ? (n ? "Continue where you left off" : "Your first lesson") : "Level " + LV.n + " complete") + "</span>" +
         '<div class="hv-lesson"><span class="hv-num">' + (i + 1) + "</span><div><strong>" + esc(l.title) + "</strong><span>" + esc(l.summary) + "</span></div></div>" +
         '<div class="hv-meta"><span>' + l.minutes + " min read</span><span>Activity + quiz</span></div>" +
-        '<a class="btn" href="lesson.html?id=' + l.id + '">' + (next ? "Open lesson " + (i + 1) : "Review lesson " + (i + 1)) + "</a></div>" +
+        '<a class="btn" href="' + lessonHref(l.id) + '">' + (next ? "Open lesson " + (i + 1) : "Review lesson " + (i + 1)) + "</a></div>" +
         '<div class="hv-card hv-progress"><div class="hv-row"><span>Your progress</span><b>' + pct + "%</b></div>" +
         '<div class="bar"><span style="width:' + pct + '%"></span></div>' +
         '<ul class="hv-units">' + UNITS.map(function (u) {
@@ -89,15 +147,15 @@
         }).join("") + "</ul></div>" +
         '<div class="hv-card hv-up"><span class="hv-label">Coming up after that</span><ol class="hv-list">' +
         LESSONS.slice(i + 1, i + 4).map(function (x, k) {
-          return '<li><a href="lesson.html?id=' + x.id + '"><span class="hv-n">' + (i + k + 2) + "</span><span>" + esc(x.title) + "</span><em>" + x.minutes + " min</em></a></li>";
-        }).join("") + (i + 1 >= LESSONS.length ? "<li>You're at the end of Level 1.</li>" : "") + "</ol></div>";
+          return '<li><a href="' + lessonHref(x.id) + '"><span class="hv-n">' + (i + k + 2) + "</span><span>" + esc(x.title) + "</span><em>" + x.minutes + " min</em></a></li>";
+        }).join("") + (i + 1 >= LESSONS.length ? "<li>You're at the end of Level " + LV.n + ".</li>" : "") + "</ol></div>";
     }
     var uc = $("#unit-cards");
     if (uc) uc.innerHTML = UNITS.map(function (u, k) {
       var ls = LESSONS.filter(function (x) { return x.unit === u.id; }), d = ls.filter(function (x) { return isDone(x.id); }).length;
       var m = ls.reduce(function (a, x) { return a + x.minutes; }, 0);
       var first = ls.find(function (x) { return !isDone(x.id); }) || ls[0];
-      return '<a class="unit-card" href="lesson.html?id=' + first.id + '"><span class="uc-num">Unit ' + (k + 1) + "</span>" +
+      return '<a class="unit-card" href="' + lessonHref(first.id) + '"><span class="uc-num">Unit ' + (k + 1) + "</span>" +
         "<strong>" + esc(u.title.replace(/^Unit \d+ · /, "")) + "</strong><span class=\"uc-blurb\">" + esc(u.blurb) + "</span>" +
         '<span class="uc-meta">' + ls.length + " lessons · " + m + " min · " + d + "/" + ls.length + " done</span>" +
         '<span class="bar"><span style="width:' + Math.round(100 * d / ls.length) + '%"></span></span>' +
@@ -115,7 +173,7 @@
     if (!form || searchReady) return;
     searchReady = true;
     var strip = function (h) { return String(h).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").toLowerCase(); };
-    var index = LESSONS.map(function (l, i) { return { l: l, n: i + 1, t: l.title.toLowerCase(), s: l.summary.toLowerCase(), b: strip(l.body || ""), terms: l.terms }; });
+    var index = ALL.map(function (l) { return { l: l, n: lessonTag(l), t: l.title.toLowerCase(), s: l.summary.toLowerCase(), b: strip(l.body || ""), terms: l.terms }; });
     function run(text) {
       var words = text.toLowerCase().trim().split(/\s+/).filter(Boolean);
       if (!words.length) { out.hidden = true; out.innerHTML = ""; return; }
@@ -131,10 +189,10 @@
       }); });
       terms = terms.slice(0, 4);
       out.innerHTML = (lessons.length ? '<p class="sr-head">Lessons</p>' + lessons.map(function (r) {
-          return '<a class="sr-item" href="lesson.html?id=' + r.x.l.id + '"><span class="sr-n">' + r.x.n + "</span><span><strong>" + esc(r.x.l.title) + "</strong><small>" + esc(r.x.l.summary) + "</small></span></a>";
+          return '<a class="sr-item" href="' + lessonHref(r.x.l.id) + '"><span class="sr-n">' + r.x.n + "</span><span><strong>" + esc(r.x.l.title) + "</strong><small>" + esc(r.x.l.summary) + "</small></span></a>";
         }).join("") : "") +
         (terms.length ? '<p class="sr-head">Key terms</p>' + terms.map(function (r) {
-          return '<a class="sr-item" href="lesson.html?id=' + r.x.l.id + '"><span class="sr-n">' + r.x.n + "</span><span><strong>" + esc(r.t[0]) + "</strong><small>" + esc(r.t[1]) + "</small></span></a>";
+          return '<a class="sr-item" href="' + lessonHref(r.x.l.id) + '"><span class="sr-n">' + r.x.n + "</span><span><strong>" + esc(r.t[0]) + "</strong><small>" + esc(r.t[1]) + "</small></span></a>";
         }).join("") : "") +
         (!lessons.length && !terms.length ? '<p class="sr-none">Nothing found for "' + esc(text) + '", Abbas. Try a simpler word, like "data" or "chatbot".</p>' : "");
       out.hidden = false;
@@ -144,7 +202,7 @@
     document.addEventListener("click", function (e) { if (!form.contains(e.target) && !out.contains(e.target) && !(chips && chips.parentNode.contains(e.target))) out.hidden = true; });
     q.addEventListener("keydown", function (e) { if (e.key === "Escape") { out.hidden = true; } });
 
-    var topics = ["Chatbots", "Neural networks", "Prompting", "Machine learning", "Data", "Bias", "Generative AI", "Deep learning", "Probability", "Algorithms", "Computer vision", "Ethics", "AI laws", "Search", "History", "Accuracy"];
+    var topics = ["Chatbots", "Neural networks", "Prompting", "Machine learning", "Python", "Data", "pandas", "Bias", "Generative AI", "Statistics", "Probability", "Deep learning", "Algorithms", "Matrices", "Computer vision", "Ethics", "AI laws", "Privacy", "History", "Accuracy"];
     if (chips) {
       chips.innerHTML = topics.map(function (t) { return '<button type="button" class="topic-chip">' + esc(t) + "</button>"; }).join("");
       chips.addEventListener("click", function (e) {
@@ -170,14 +228,13 @@
 
   /* ---------- lesson page ---------- */
   function renderLesson() {
-    var id = new URLSearchParams(location.search).get("id");
-    var idx = LESSONS.findIndex(function (l) { return l.id === id; });
-    if (idx < 0) idx = 0;
-    var l = LESSONS[idx];
+    var l = lessonById(currentLessonId()) || ALL[0];
+    setLevel(levelOf(l));
+    var idx = LESSONS.indexOf(l), at = ALL.indexOf(l), prev = ALL[at - 1], nxt = ALL[at + 1];
     document.title = l.title + " · Abbas’ AI Academy";
 
     var html =
-      '<p class="crumbs"><a href="index.html">Level 1: Foundations</a> › ' + (unitOf(l) ? esc(unitOf(l).title) + " › " : "") + "Lesson " + (idx + 1) + " of " + LESSONS.length + "</p>" +
+      '<p class="crumbs"><a href="' + levelHref(LV.n) + '">Level ' + LV.n + ": " + esc(LV.name) + '</a> › ' + (unitOf(l) ? esc(unitOf(l).title) + " › " : "") + "Lesson " + (idx + 1) + " of " + LESSONS.length + "</p>" +
       '<span class="eyebrow">Lesson ' + (idx + 1) + " · " + l.minutes + " min read</span>" +
       "<h1>" + esc(l.title) + "</h1>" +
       '<p class="lead">' + esc(l.summary) + "</p>" +
@@ -190,8 +247,10 @@
       "<p>Get at least " + passMark(l) + " of " + l.quiz.length + " right to complete this lesson.</p>" +
       '<div id="questions"></div><div id="quiz-result"></div></section>' +
       '<nav class="pager">' +
-      (idx > 0 ? '<a class="btn secondary" href="lesson.html?id=' + LESSONS[idx - 1].id + '">← ' + esc(LESSONS[idx - 1].title) + "</a>" : '<a class="btn secondary" href="index.html">← All lessons</a>') +
-      (idx < LESSONS.length - 1 ? '<a class="btn" id="next-btn" href="lesson.html?id=' + LESSONS[idx + 1].id + '">Next: ' + esc(LESSONS[idx + 1].title) + " →</a>" : '<a class="btn" id="next-btn" href="index.html#certificate">Finish Level 1 →</a>') +
+      (prev ? '<a class="btn secondary" href="' + lessonHref(prev.id) + '">← ' + esc(prev.title) + "</a>" : '<a class="btn secondary" href="' + levelHref(LV.n) + '">← All lessons</a>') +
+      (idx < LESSONS.length - 1 ? '<a class="btn" id="next-btn" href="' + lessonHref(nxt.id) + '">Next: ' + esc(nxt.title) + " →</a>" :
+        nxt ? '<a class="btn" id="next-btn" href="' + lessonHref(nxt.id) + '">Start Level ' + nxt.level + ": " + esc(levelOf(nxt).name) + " →</a>" :
+        '<a class="btn" id="next-btn" href="' + levelHref(LV.n) + '#certificate">Finish Level ' + LV.n + " →</a>") +
       "</nav>";
 
     $("#lesson").innerHTML = html;
@@ -201,7 +260,7 @@
   }
 
   function unitOf(l) {
-    return (window.LEVEL1_UNITS || []).find(function (u) { return u.id === l.unit; });
+    return levelOf(l).units.find(function (u) { return u.id === l.unit; });
   }
 
   function renderSources(l) {
@@ -256,7 +315,7 @@
       var retry = $("#retry");
       if (retry) retry.onclick = function () { $("#questions").innerHTML = ""; r.innerHTML = ""; renderQuiz(l); };
       if (passed && doneCount() === LESSONS.length) {
-        r.innerHTML += '<div class="result pass">Congratulations, Abbas! You\'ve finished every Level 1 lesson. <a href="index.html#certificate">See your completion badge</a>.</div>';
+        r.innerHTML += '<div class="result pass">Congratulations, Abbas! You\'ve finished every Level ' + LV.n + ' lesson. <a href="' + levelHref(LV.n) + '#certificate">See your completion badge</a>.</div>';
       }
     }
   }
@@ -645,8 +704,201 @@
         b.onclick = function () { var i = +b.dataset.i; on[i] = !on[i]; b.classList.toggle("yes", on[i]); update(); };
       });
       update();
+    },
+
+    /* ===== Level 2 activities ===== */
+
+    /* Run real Python in the page. Markup: <div data-widget="py" data-title="..."><textarea>code</textarea></div> */
+    "py": function (el) {
+      var src = el.querySelector("textarea"), start = src ? src.value.replace(/^\n+|\s+$/g, "") : "";
+      var title = el.dataset.title || "Try it: run the code";
+      el.className = "panel py";
+      el.innerHTML = "<h3>" + esc(title) + "</h3>" +
+        '<p class="py-status">Change anything you like, then press Run. The first run takes a few seconds while Python loads.</p>' +
+        '<label class="sr-only">Python code</label><textarea class="py-code" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>' +
+        '<div class="chip-row"><button class="btn" type="button" data-run>Run</button><button class="btn secondary" type="button" data-reset>Reset</button></div>' +
+        '<pre class="py-out" aria-live="polite">Output will appear here.</pre>';
+      var ta = el.querySelector(".py-code"), out = el.querySelector(".py-out"), run = el.querySelector("[data-run]");
+      ta.value = start;
+      var fit = function () { ta.style.height = "auto"; ta.style.height = Math.max(120, ta.scrollHeight + 4) + "px"; };
+      fit(); ta.addEventListener("input", fit);
+      ta.addEventListener("keydown", function (e) {
+        if (e.key === "Tab" && !e.shiftKey) { e.preventDefault(); var a = ta.selectionStart; ta.setRangeText("    ", a, ta.selectionEnd, "end"); }
+        if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); run.click(); }
+      });
+      el.querySelector("[data-reset]").onclick = function () { ta.value = start; fit(); out.className = "py-out"; out.textContent = "Output will appear here."; };
+      run.onclick = function () {
+        run.disabled = true; out.className = "py-out"; out.textContent = pyLoading ? "Loading Python…" : "Running…";
+        getPython().then(function (py) {
+          var lines = [];
+          py.setStdout({ batched: function (t) { lines.push(t); } });
+          py.setStderr({ batched: function (t) { lines.push(t); } });
+          var ns = py.globals.get("dict")();
+          return py.loadPackagesFromImports(ta.value).then(function () { return py.runPythonAsync(ta.value, { globals: ns }); }).then(function (v) {
+            if (v !== undefined && v !== null && !lines.length) lines.push(String(v));
+            out.textContent = lines.join("\n") || "(The code ran, but printed nothing. Use print(...) to see a result.)";
+          }, function (err) {
+            var msg = String(err && err.message || err).trim().split("\n");
+            var last = msg[msg.length - 1];
+            var lineNo = (String(err && err.message || "").match(/line (\d+)/g) || []).pop();
+            out.className = "py-out err";
+            if (/Failed to load|No module named '(numpy|pandas)/.test(String(err && err.message || err))) {
+              out.textContent = "This example needs an add-on library (NumPy or pandas) that couldn't load just now, Abbas. Check your internet connection and press Run again. If you're on the Claude-hosted copy of the academy, open this lesson on your main academy site instead.";
+              return;
+            }
+            out.textContent = (lines.length ? lines.join("\n") + "\n\n" : "") + "Python found a problem, Abbas" + (lineNo ? " (" + lineNo.replace(/(\d+)/, "$1") + ")" : "") + ":\n" + last;
+          });
+        }, function () {
+          out.className = "py-out err";
+          out.textContent = "Python couldn't load, Abbas. Check your internet connection and press Run again. If you're on the Claude-hosted copy of the academy, code boxes only run on your main academy site. (The lesson text explains what this code prints.)";
+        }).then(function () { run.disabled = false; });
+      };
+    },
+
+    /* Mean versus median: drag one salary upwards and watch which average moves. */
+    "mean-median": function (el) {
+      var base = [24, 27, 29, 31, 33, 35, 38];
+      el.className = "panel";
+      el.innerHTML = "<h3>Try it: one big salary</h3><p>Seven people in a small team earn these salaries (in £ thousands). Move the slider to give the boss a bigger salary and watch what happens to the mean and the median.</p>" +
+        '<svg class="plot" viewBox="0 0 320 120" role="img" aria-label="Salaries on a number line with the mean and median marked"></svg>' +
+        '<label class="slider-row"><span>Boss earns</span><input type="range" min="40" max="400" step="5" value="45"><output></output></label>' +
+        '<div class="neuron-out" aria-live="polite"></div>';
+      var svg = el.querySelector("svg"), inp = el.querySelector("input");
+      function update() {
+        var boss = +inp.value; inp.nextElementSibling.textContent = boss + "k";
+        var all = base.concat([boss]).sort(function (a, b) { return a - b; });
+        var mean = all.reduce(function (a, b) { return a + b; }, 0) / all.length;
+        var med = (all[3] + all[4]) / 2;
+        var X = function (v) { return 14 + (Math.min(v, 400) / 400) * 292; };
+        var h = '<line class="axis" x1="14" y1="70" x2="306" y2="70"/>';
+        all.forEach(function (v) { h += '<circle class="dot" cx="' + X(v) + '" cy="70" r="5"/>'; });
+        h += '<line class="fit" x1="' + X(med) + '" y1="30" x2="' + X(med) + '" y2="90"/><text x="' + X(med) + '" y="24" text-anchor="middle" font-size="11">median</text>';
+        h += '<line class="err" x1="' + X(mean) + '" y1="40" x2="' + X(mean) + '" y2="100"/><text x="' + X(mean) + '" y="114" text-anchor="middle" font-size="11">mean</text>';
+        svg.innerHTML = h;
+        el.querySelector(".neuron-out").innerHTML = "Mean (add up and divide): <strong>£" + mean.toFixed(1) + "k</strong>. Median (the middle value): <strong>£" + med.toFixed(1) + "k</strong>. " +
+          (mean - med > 10 ? "One extreme value has dragged the mean far above what a typical person earns. The median hardly moved." : "With no extreme values, the mean and median are close together.");
+      }
+      inp.addEventListener("input", update); update();
+    },
+
+    /* Sampling: draw random samples and watch the averages pile up into a bell shape. */
+    "sampling": function (el) {
+      el.className = "panel";
+      el.innerHTML = "<h3>Try it: averages of random samples</h3><p>Each roll of a fair dice is equally likely to be 1 to 6, which is a flat shape, not a bell. Now roll a handful of dice, take their average, and repeat. The chart counts how often each average comes up.</p>" +
+        '<label class="slider-row"><span>Dice per sample</span><input type="range" min="1" max="30" step="1" value="1"><output></output></label>' +
+        '<div class="chip-row"><button class="chip" type="button" data-n="1">Take 1 sample</button><button class="chip" type="button" data-n="100">Take 100 samples</button><button class="chip" type="button" data-n="1000">Take 1,000 samples</button><button class="chip" type="button" data-clear>Clear</button></div>' +
+        '<svg class="plot" viewBox="0 0 320 170" role="img" aria-label="Bar chart of sample averages"></svg>' +
+        '<div class="neuron-out" aria-live="polite"></div>';
+      var svg = el.querySelector("svg"), inp = el.querySelector("input"), means = [];
+      function draw() {
+        inp.nextElementSibling.textContent = inp.value;
+        var bins = new Array(26).fill(0);
+        means.forEach(function (m) { bins[Math.min(25, Math.floor((m - 1) / 5 * 25))]++; });
+        var top = Math.max.apply(null, bins.concat([1]));
+        var h = '<line class="axis" x1="10" y1="150" x2="310" y2="150"/>';
+        bins.forEach(function (c, i) { var bh = 130 * c / top; h += '<rect class="bar-col" x="' + (12 + i * 11.5) + '" y="' + (150 - bh) + '" width="10" height="' + bh + '"/>'; });
+        [1, 2, 3, 4, 5, 6].forEach(function (v) { h += '<text x="' + (12 + (v - 1) / 5 * 25 * 11.5) + '" y="165" font-size="11">' + v + "</text>"; });
+        svg.innerHTML = h;
+        var n = means.length, avg = n ? means.reduce(function (a, b) { return a + b; }, 0) / n : 0;
+        var sd = n > 1 ? Math.sqrt(means.reduce(function (a, b) { return a + (b - avg) * (b - avg); }, 0) / (n - 1)) : 0;
+        el.querySelector(".neuron-out").innerHTML = n ? "<strong>" + n.toLocaleString() + "</strong> samples so far. Average of the averages: <strong>" + avg.toFixed(2) + "</strong> (the true average of a dice is 3.5). Spread (standard deviation): <strong>" + sd.toFixed(2) + "</strong>. " +
+          (+inp.value === 1 ? "With one dice per sample the shape stays flat. Now try 10 or 30 dice per sample." : "More dice per sample gives a narrower bell, centred on 3.5.") : "Press a button to start rolling.";
+      }
+      el.querySelectorAll("[data-n]").forEach(function (b) {
+        b.onclick = function () {
+          var k = +inp.value;
+          for (var s = 0; s < +b.dataset.n; s++) { var t = 0; for (var j = 0; j < k; j++) t += 1 + Math.floor(Math.random() * 6); means.push(t / k); }
+          draw();
+        };
+      });
+      el.querySelector("[data-clear]").onclick = function () { means = []; draw(); };
+      inp.addEventListener("input", function () { means = []; draw(); });
+      draw();
+    },
+
+    /* Correlation: change how strongly two things move together. */
+    "correlation": function (el) {
+      el.className = "panel";
+      el.innerHTML = "<h3>Try it: see a correlation</h3><p>Each dot is one day: hours of sunshine across, ice creams sold up. Move the slider to change how closely they are linked.</p>" +
+        '<svg class="plot" viewBox="0 0 320 200" role="img" aria-label="Scatter plot whose correlation you can change"></svg>' +
+        '<label class="slider-row"><span>Link strength</span><input type="range" min="-1" max="1" step="0.05" value="0.7"><output></output></label>' +
+        '<div class="neuron-out" aria-live="polite"></div>';
+      var svg = el.querySelector("svg"), inp = el.querySelector("input");
+      // Fixed pseudo-random pairs so the picture is stable.
+      var seed = 7, rnd = function () { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+      var gauss = function () { return Math.sqrt(-2 * Math.log(rnd() + 1e-9)) * Math.cos(2 * Math.PI * rnd()); };
+      var A = [], B = []; for (var i = 0; i < 60; i++) { A.push(gauss()); B.push(gauss()); }
+      function update() {
+        var r = +inp.value; inp.nextElementSibling.textContent = r.toFixed(2);
+        var ys = A.map(function (a, i) { return r * a + Math.sqrt(1 - r * r) * B[i]; });
+        var n = A.length, mx = 0, my = 0; A.forEach(function (a, i) { mx += a; my += ys[i]; }); mx /= n; my /= n;
+        var sxy = 0, sxx = 0, syy = 0; A.forEach(function (a, i) { sxy += (a - mx) * (ys[i] - my); sxx += (a - mx) * (a - mx); syy += (ys[i] - my) * (ys[i] - my); });
+        var rr = sxy / Math.sqrt(sxx * syy);
+        var h = '<line class="axis" x1="20" y1="185" x2="310" y2="185"/><line class="axis" x1="20" y1="10" x2="20" y2="185"/>';
+        A.forEach(function (a, i) { h += '<circle class="dot" cx="' + (165 + a * 45) + '" cy="' + (97 - ys[i] * 30) + '" r="4"/>'; });
+        svg.innerHTML = h;
+        var word = Math.abs(rr) > 0.7 ? "strong" : Math.abs(rr) > 0.3 ? "moderate" : "weak or no";
+        el.querySelector(".neuron-out").innerHTML = "Correlation coefficient <em>r</em> = <strong>" + rr.toFixed(2) + "</strong>: a " + word + (Math.abs(rr) > 0.3 ? (rr > 0 ? " positive" : " negative") : "") + " link. " +
+          (rr > 0.3 ? "When one goes up, the other tends to go up." : rr < -0.3 ? "When one goes up, the other tends to go down." : "Knowing one tells you little about the other.") + " Remember: even a strong correlation does not prove one causes the other.";
+      }
+      inp.addEventListener("input", update); update();
+    },
+
+    /* Slopes: slide along a curve and see the slope, then take gradient descent steps downhill. */
+    "slope": function (el) {
+      el.className = "panel";
+      el.innerHTML = "<h3>Try it: roll downhill</h3><p>The curve is a loss: lower is better. The slope (the derivative) tells you which way is downhill. Press Step to move against the slope, and change the step size (the learning rate).</p>" +
+        '<svg class="plot" viewBox="0 0 320 200" role="img" aria-label="A U-shaped curve with a ball and its slope"></svg>' +
+        '<label class="slider-row"><span>Learning rate</span><input type="range" min="0.05" max="1.05" step="0.05" value="0.2"><output></output></label>' +
+        '<div class="chip-row"><button class="chip" type="button" data-step>Step downhill</button><button class="chip" type="button" data-reset>Start again</button></div>' +
+        '<div class="neuron-out" aria-live="polite"></div>';
+      var svg = el.querySelector("svg"), inp = el.querySelector("input"), x = -3.6, steps = 0;
+      var f = function (v) { return (v - 1) * (v - 1) + 1; }, d = function (v) { return 2 * (v - 1); };
+      var X = function (v) { return 160 + (v - 1) * 30; }, Y = function (v) { return 190 - v * 7.5; };
+      function draw(msg) {
+        inp.nextElementSibling.textContent = (+inp.value).toFixed(2);
+        var h = '<line class="axis" x1="10" y1="190" x2="310" y2="190"/><path class="fit" fill="none" d="';
+        for (var v = -4; v <= 6.01; v += 0.1) h += (v === -4 ? "M" : "L") + X(v).toFixed(1) + " " + Y(f(v)).toFixed(1) + " ";
+        h += '"/>';
+        var sl = d(x), x0 = x - 0.9, x1 = x + 0.9;
+        h += '<line class="err" x1="' + X(x0) + '" y1="' + Y(f(x) + sl * (x0 - x)) + '" x2="' + X(x1) + '" y2="' + Y(f(x) + sl * (x1 - x)) + '"/>';
+        h += '<circle class="dot" cx="' + X(x) + '" cy="' + Y(f(x)) + '" r="7"/>';
+        svg.innerHTML = h;
+        el.querySelector(".neuron-out").innerHTML = (msg ? msg + " " : "") + "Position <strong>" + x.toFixed(2) + "</strong>, loss <strong>" + f(x).toFixed(2) + "</strong>, slope <strong>" + sl.toFixed(2) + "</strong>" +
+          (Math.abs(sl) < 0.05 ? ". The slope is almost zero: you have reached the bottom in " + steps + " steps." : sl < 0 ? ". Negative slope: downhill is to the right." : ". Positive slope: downhill is to the left.");
+      }
+      el.querySelector("[data-step]").onclick = function () {
+        var lr = +inp.value; x = x - lr * d(x); steps++;
+        if (Math.abs(x) > 40) { x = -3.6; steps = 0; draw("The steps were so big the ball flew off the chart. A learning rate that is too large makes training blow up."); return; }
+        draw(lr >= 1 ? "Too big a step: the ball jumps past the bottom and back again." : "");
+      };
+      el.querySelector("[data-reset]").onclick = function () { x = -3.6; steps = 0; draw(); };
+      inp.addEventListener("input", function () { draw(); });
+      draw();
     }
   };
+
+  /* Python runs in the browser with Pyodide, loaded only when first needed. */
+  var PY_BASES = ["https://cdn.jsdelivr.net/pyodide/v0.27.7/full/"];
+  var pyPromise = null, pyLoading = false;
+  function getPython() {
+    if (pyPromise) return pyPromise;
+    pyLoading = true;
+    pyPromise = new Promise(function (resolve, reject) {
+      // Try each address in turn until Python loads.
+      (function attempt(k) {
+        if (k >= PY_BASES.length) return reject(new Error("Python could not load"));
+        var base = PY_BASES[k], next = function () { delete window.loadPyodide; attempt(k + 1); };
+        var sc = document.createElement("script");
+        sc.src = base + "pyodide.js";
+        sc.onload = function () { window.loadPyodide({ indexURL: base }).then(resolve, next); };
+        sc.onerror = next;
+        document.head.appendChild(sc);
+      })(0);
+    });
+    pyPromise.then(function () { pyLoading = false; }, function () { pyPromise = null; pyLoading = false; });
+    return pyPromise;
+  }
 
   function mountWidgets(root) {
     root.querySelectorAll("[data-widget]").forEach(function (el) {
@@ -658,14 +910,14 @@
   /* ---------- glossary ---------- */
   function renderGlossary() {
     var all = [];
-    LESSONS.forEach(function (l, i) { l.terms.forEach(function (t) { all.push({ term: t[0], def: t[1], lesson: l, n: i + 1 }); }); });
+    ALL.forEach(function (l) { l.terms.forEach(function (t) { all.push({ term: t[0], def: t[1], lesson: l, n: lessonTag(l) }); }); });
     all.sort(function (a, b) { return a.term.localeCompare(b.term); });
     var list = $("#gloss");
     function draw(filter) {
       var f = (filter || "").toLowerCase();
       list.innerHTML = all.filter(function (x) { return !f || (x.term + " " + x.def).toLowerCase().indexOf(f) >= 0; })
         .map(function (x) {
-          return "<dt>" + esc(x.term) + "</dt><dd>" + esc(x.def) + ' <a href="lesson.html?id=' + x.lesson.id + '">Lesson ' + x.n + "</a></dd>";
+          return "<dt>" + esc(x.term) + "</dt><dd>" + esc(x.def) + ' <a href="' + lessonHref(x.lesson.id) + '">' + (x.lesson.level > 1 ? "Level " + x.lesson.level + ", lesson " + x.lesson.num : "Lesson " + x.n) + "</a></dd>";
         }).join("") || "<dd>No matching terms.</dd>";
     }
     $("#gloss-search").addEventListener("input", function (e) { draw(e.target.value); });
@@ -673,6 +925,7 @@
   }
 
   var page = document.body.dataset.page;
+  if (page === "glossary" || page === "home") setLevel(pickLevel());
   if (page === "home") renderHome();
   else if (page === "lesson") renderLesson();
   else if (page === "glossary") renderGlossary();
@@ -680,7 +933,7 @@
   /* ---------- side panels (wide screens only) ---------- */
   function allTerms() {
     var all = [];
-    LESSONS.forEach(function (l, i) { l.terms.forEach(function (t) { all.push({ term: t[0], def: t[1], lesson: l, n: i + 1 }); }); });
+    ALL.forEach(function (l) { l.terms.forEach(function (t) { all.push({ term: t[0], def: t[1], lesson: l, n: lessonTag(l) }); }); });
     return all;
   }
   function termOfTheDay() {
@@ -693,41 +946,42 @@
     var next = LESSONS.find(function (l) { return !isDone(l.id); });
     return card("Your progress",
       '<div class="side-big">' + pct + '%</div><div class="bar"><span style="width:' + pct + '%"></span></div>' +
-      '<p class="side-small">' + n + " of " + t + " lessons done</p>" +
-      (next ? '<p class="side-small">Next up: <a href="lesson.html?id=' + next.id + '">' + esc(next.title) + "</a></p>" : "<p class=\"side-small\">Level 1 complete. Brilliant work, Abbas.</p>"));
+      '<p class="side-small">' + n + " of " + t + " Level ' + LV.n + ' lessons done</p>" +
+      (next ? '<p class="side-small">Next up: <a href="' + lessonHref(next.id) + '">' + esc(next.title) + "</a></p>" : "<p class=\"side-small\">Level " + LV.n + " complete. Brilliant work, Abbas.</p>"));
   }
   function termCard() {
     var t = termOfTheDay();
-    return card("Term of the day", '<p class="side-term">' + esc(t.term) + '</p><p class="side-small">' + esc(t.def) + '</p><p class="side-small"><a href="lesson.html?id=' + t.lesson.id + '">From Lesson ' + t.n + "</a></p>");
+    return card("Term of the day", '<p class="side-term">' + esc(t.term) + '</p><p class="side-small">' + esc(t.def) + '</p><p class="side-small"><a href="' + lessonHref(t.lesson.id) + '">From ' + (t.lesson.level > 1 ? "Level " + t.lesson.level + ", lesson " + t.lesson.num : "Lesson " + t.n) + "</a></p>");
   }
 
   function navTab() {
-    var UNITS = window.LEVEL1_UNITS || [];
-    var curId = page === "lesson" ? (new URLSearchParams(location.search).get("id") || LESSONS[0].id) : null;
+    var curId = page === "lesson" ? (currentLessonId() || ALL[0].id) : null;
     var html = '<nav class="nav-tab" aria-label="Course menu">' +
-      '<a class="nav-top' + (page === "home" ? " here" : "") + '" href="index.html">Home</a>' +
-      '<a class="nav-top' + (page === "glossary" ? " here" : "") + '" href="glossary.html">Glossary</a>' +
-      '<p class="nav-level">Level 1 · Foundations</p>';
-    UNITS.forEach(function (u) {
-      var ls = LESSONS.filter(function (l) { return l.unit === u.id; });
-      var open = !curId || ls.some(function (l) { return l.id === curId; });
-      var d = ls.filter(function (l) { return isDone(l.id); }).length;
-      html += '<details class="nav-unit"' + (open ? " open" : "") + '><summary><span>' + esc(u.title.replace(/^Unit (\d+) · /, "$1. ")) + '</span><span class="side-count">' + d + "/" + ls.length + "</span></summary><ol>" +
-        ls.map(function (l) {
-          var n = LESSONS.indexOf(l) + 1;
-          return '<li class="' + (l.id === curId ? "here" : "") + (isDone(l.id) ? " done" : "") + '"><a href="lesson.html?id=' + l.id + '"><span class="nav-num">' + (isDone(l.id) ? "✓" : n) + "</span>" + esc(l.title) + "</a></li>";
-        }).join("") + "</ol></details>";
+      '<a class="nav-top' + (page === "home" ? " here" : "") + '" href="' + levelHref(LV.n) + '">Home</a>' +
+      '<a class="nav-top' + (page === "glossary" ? " here" : "") + '" href="glossary.html">Glossary</a>';
+    LEVELS.forEach(function (m) {
+      if (!m.ready) { html += '<p class="nav-level nav-locked">Level ' + m.n + " · " + esc(m.name) + " · coming soon</p>"; return; }
+      var md = m.lessons.filter(function (l) { return isDone(l.id); }).length;
+      if (m !== LV) { html += '<a class="nav-level nav-level-link" href="' + levelHref(m.n) + '"><span>Level ' + m.n + " · " + esc(m.name) + '</span><span class="side-count">' + md + "/" + m.lessons.length + "</span></a>"; return; }
+      html += '<p class="nav-level">Level ' + m.n + " · " + esc(m.name) + "</p>";
+      m.units.forEach(function (u) {
+        var ls = m.lessons.filter(function (l) { return l.unit === u.id; });
+        var open = !curId || ls.some(function (l) { return l.id === curId; });
+        var d = ls.filter(function (l) { return isDone(l.id); }).length;
+        html += '<details class="nav-unit"' + (open ? " open" : "") + '><summary><span>' + esc(u.title.replace(/^Unit (\d+) · /, "$1. ")) + '</span><span class="side-count">' + d + "/" + ls.length + "</span></summary><ol>" +
+          ls.map(function (l) {
+            return '<li class="' + (l.id === curId ? "here" : "") + (isDone(l.id) ? " done" : "") + '"><a href="' + lessonHref(l.id) + '"><span class="nav-num">' + (isDone(l.id) ? "✓" : l.num) + "</span>" + esc(l.title) + "</a></li>";
+          }).join("") + "</ol></details>";
+      });
     });
-    html += '<p class="nav-level nav-locked">Levels 2 to 5 · coming soon</p></nav>';
-    return html;
+    return html + "</nav>";
   }
-
   function buildSides() {
     var main = document.querySelector("main");
     if (!main) return;
     var left = navTab(), right = "";
     if (page === "home") {
-      var units = (window.LEVEL1_UNITS || []);
+      var units = UNITS;
       document.querySelectorAll(".unit-head").forEach(function (h, i) { h.id = "unit-" + (i + 1); });
       right = progressCard() + termCard() + card("Jump to a unit", '<ol class="side-list">' + units.map(function (u, i) {
         var ls = LESSONS.filter(function (l) { return l.unit === u.id; }), d = ls.filter(function (l) { return isDone(l.id); }).length;
@@ -737,8 +991,7 @@
       var art = document.getElementById("lesson");
       var heads = art.querySelectorAll("h2");
       heads.forEach(function (h, i) { h.id = "sec-" + (i + 1); });
-      var id = new URLSearchParams(location.search).get("id");
-      var l = LESSONS.find(function (x) { return x.id === id; }) || LESSONS[0];
+      var l = lessonById(currentLessonId()) || ALL[0];
       right = card("In this lesson", '<ol class="side-list side-toc">' + Array.prototype.map.call(heads, function (h) {
         return '<li><a href="#' + h.id + '">' + esc(h.textContent) + "</a></li>";
       }).join("") + "</ol>") +
@@ -779,17 +1032,19 @@
   function buildFooter() {
     var f = document.getElementById("site-footer");
     if (!f) return;
-    var UNITS = window.LEVEL1_UNITS || [];
-    var next = LESSONS.find(function (l) { return !isDone(l.id); });
+    var next = nextAll();
     f.innerHTML = '<div class="foot-grid">' +
       '<div class="foot-brand"><p class="foot-name">Abbas’ AI Academy</p><p>Your path from AI beginner to master, one short lesson at a time.</p><p class="foot-note">Your progress is saved in this browser only.</p></div>' +
-      '<div><p class="foot-head">Learn</p><ul><li><a href="index.html">Home</a></li><li><a href="index.html#lessons">All 16 lessons</a></li><li><a href="glossary.html">Glossary</a></li>' +
-        (next ? '<li><a href="lesson.html?id=' + next.id + '">Next lesson: ' + esc(next.title) + "</a></li>" : "") + "</ul></div>" +
-      '<div><p class="foot-head">Level 1 units</p><ul>' + UNITS.map(function (u, i) {
+      '<div><p class="foot-head">Learn</p><ul><li><a href="' + levelHref(LV.n) + '">Home</a></li><li><a href="' + levelHref(LV.n) + '#lessons">All Level ' + LV.n + ' lessons</a></li><li><a href="glossary.html">Glossary</a></li>' +
+        (next ? '<li><a href="' + lessonHref(next.id) + '">Next lesson: ' + esc(next.title) + "</a></li>" : "") + "</ul></div>" +
+      '<div><p class="foot-head">Level ' + LV.n + ' units</p><ul>' + UNITS.map(function (u, i) {
         var first = LESSONS.find(function (l) { return l.unit === u.id; });
-        return '<li><a href="lesson.html?id=' + first.id + '">' + (i + 1) + ". " + esc(u.title.replace(/^Unit \d+ · /, "")) + "</a></li>";
+        return '<li><a href="' + lessonHref(first.id) + '">' + (i + 1) + ". " + esc(u.title.replace(/^Unit \d+ · /, "")) + "</a></li>";
       }).join("") + "</ul></div>" +
-      '<div><p class="foot-head">Your road</p><ul class="foot-plain"><li>Level 1: Foundations <span class="foot-tag">Now</span></li><li>Level 2: Data and Python</li><li>Level 3: Machine learning</li><li>Level 4: Deep learning and LLMs</li><li>Level 5: Mastery</li></ul></div>' +
+      '<div><p class="foot-head">Your road</p><ul class="foot-plain">' + LEVELS.map(function (m) {
+        var t = "Level " + m.n + ": " + esc(m.name);
+        return "<li>" + (m.ready ? '<a href="' + levelHref(m.n) + '">' + t + "</a>" : t + ' <span class="foot-soon">coming soon</span>') + (m === LV ? ' <span class="foot-tag">Now</span>' : "") + "</li>";
+      }).join("") + "</ul></div>" +
       "</div>" + '<div class="foot-bottom">Every lesson lists its sources so you can check the facts.</div>';
   }
   buildFooter();
