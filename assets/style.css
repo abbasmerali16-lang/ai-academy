@@ -362,8 +362,10 @@ body { background: var(--page); }
   .site-header .wrap, footer .wrap { max-width: none; padding: 0 24px; }
 }
 
-/* Warm gradient behind the white reading area */
-body { background: linear-gradient(160deg, #ffe3cf 0%, #fff1d6 45%, #ffd9c2 100%) fixed; }
+/* Dark charcoal behind the white reading area, with a faint orange glow */
+body { background: #1d1f24 radial-gradient(circle at 20% 0%, rgba(228,87,46,.25), transparent 45%) fixed; }
+.layout > main.wrap { border-color: #1d1f24; }
+.side-card { border-left-color: #2c2f36; border-right-color: #2c2f36; border-bottom-color: #2c2f36; }
 @media (max-width: 860px) { body { background: #fff; } }
 
 /* Movement */
