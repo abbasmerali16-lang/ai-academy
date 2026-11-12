@@ -52,7 +52,7 @@
       start.textContent = doneCount() ? "Welcome back, Abbas. Continue: " + next.title : "Start Lesson 1";
     } else {
       start.href = "#certificate";
-      start.textContent = "Level 1 complete, Abbas 🎉";
+      start.textContent = "Level 1 complete, Abbas";
     }
     var cert = $("#certificate");
     if (cert) cert.hidden = !!next;
@@ -142,6 +142,7 @@
       var prev = progress[l.id] || {};
       progress[l.id] = { passed: passed || !!prev.passed, best: Math.max(correct, prev.best || 0) };
       save(progress);
+      if (passed) celebrate();
       var r = $("#quiz-result");
       r.innerHTML = '<div class="result ' + (passed ? "pass" : "fail") + '">' +
         "Abbas, you scored " + correct + " / " + l.quiz.length + ". " +
@@ -150,7 +151,7 @@
       var retry = $("#retry");
       if (retry) retry.onclick = function () { $("#questions").innerHTML = ""; r.innerHTML = ""; renderQuiz(l); };
       if (passed && doneCount() === LESSONS.length) {
-        r.innerHTML += '<div class="result pass">🎓 Congratulations, Abbas! You\'ve finished every Level 1 lesson. <a href="index.html#certificate">See your completion badge</a>.</div>';
+        r.innerHTML += '<div class="result pass">Congratulations, Abbas! You\'ve finished every Level 1 lesson. <a href="index.html#certificate">See your completion badge</a>.</div>';
       }
     }
   }
@@ -238,7 +239,7 @@
         var p = 1 / (1 + Math.exp(-sum));
         el.querySelector(".neuron-out").innerHTML =
           "Weighted sum = " + sum.toFixed(1) + " → activation (sigmoid) = <strong>" + Math.round(p * 100) + "%</strong><br>" +
-          (p >= 0.5 ? "🏖️ The neuron fires: <strong>go to the beach!</strong>" : "🏠 The neuron stays quiet: <strong>stay home.</strong>");
+          (p >= 0.5 ? "The neuron fires: <strong>go to the beach!</strong>" : "The neuron stays quiet: <strong>stay home.</strong>");
       }
       el.addEventListener("input", update);
       update();
@@ -408,7 +409,7 @@
         svg.innerHTML = html;
         var e = mae(m, b);
         el.querySelector(".neuron-out").innerHTML = "Average error (the <em>loss</em>): <strong>£" + Math.round(e) + "k</strong> per home. " +
-          (e < bestErr + 3 ? "🎯 Excellent, that's about as good as a straight line gets here." : "The red lines show each error. Try to shrink them.");
+          (e < bestErr + 3 ? "Excellent, that's about as good as a straight line gets here." : "The red lines show each error. Try to shrink them.");
       }
       el.querySelector("[data-best]").onclick = function () {
         el.querySelector('[data-k="m"]').value = bestM.toFixed(2); el.querySelector('[data-k="b"]').value = Math.round(bestB); update();
@@ -441,7 +442,7 @@
         fruit.forEach(function (f) { html += '<circle class="' + (f[2] === "A" ? "apple" : "lemon") + '" cx="' + X(f[0]) + '" cy="' + Y(f[1]) + '" r="6"/>'; });
         html += '<text class="star" x="' + X(v.w) + '" y="' + (Y(v.r) + 6) + '" text-anchor="middle">★</text>';
         svg.innerHTML = html;
-        var guess = votes.A > votes.L ? "🍎 an apple" : "🍋 a lemon";
+        var guess = votes.A > votes.L ? "an apple" : "a lemon";
         el.querySelector(".neuron-out").innerHTML = "The " + v.k + " nearest neighbour" + (v.k > 1 ? "s vote" : " votes") + ": " + votes.A + " apple, " + votes.L + " lemon. Prediction: <strong>" + guess + "</strong>.";
       }
       el.addEventListener("input", update);
@@ -464,7 +465,7 @@
         row.innerHTML = mail.map(function (m) {
           var flag = m[0] >= t;
           if (flag && m[1]) tp++; else if (flag) fp++; else if (m[1]) fn++; else tn++;
-          return '<span class="mail' + (m[1] ? " spam" : "") + (flag ? " flagged" : "") + '" title="score ' + m[0] + '">' + (flag ? "🗑️" : "📧") + "<small>" + m[0] + "</small></span>";
+          return '<span class="mail' + (m[1] ? " spam" : "") + (flag ? " flagged" : "") + '" title="score ' + m[0] + '">' + (flag ? "BIN" : "MAIL") + "<small>" + m[0] + "</small></span>";
         }).join("");
         var prec = tp + fp ? Math.round(100 * tp / (tp + fp)) : 100, rec = Math.round(100 * tp / (tp + fn));
         el.querySelector(".neuron-out").innerHTML =
@@ -586,8 +587,8 @@
     var UNITS = window.LEVEL1_UNITS || [];
     var curId = page === "lesson" ? (new URLSearchParams(location.search).get("id") || LESSONS[0].id) : null;
     var html = '<nav class="nav-tab" aria-label="Course menu">' +
-      '<a class="nav-top' + (page === "home" ? " here" : "") + '" href="index.html">🏠 Home</a>' +
-      '<a class="nav-top' + (page === "glossary" ? " here" : "") + '" href="glossary.html">📖 Glossary</a>' +
+      '<a class="nav-top' + (page === "home" ? " here" : "") + '" href="index.html">Home</a>' +
+      '<a class="nav-top' + (page === "glossary" ? " here" : "") + '" href="glossary.html">Glossary</a>' +
       '<p class="nav-level">Level 1 · Foundations</p>';
     UNITS.forEach(function (u) {
       var ls = LESSONS.filter(function (l) { return l.unit === u.id; });
@@ -670,4 +671,54 @@
   fitTitles();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitTitles);
   window.addEventListener("resize", fitTitles);
+
+  /* ---------- movement and feedback ---------- */
+  var calm = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // Celebrate a passed quiz with a short burst of orange and gold confetti.
+  function celebrate() {
+    if (calm) return;
+    var c = document.createElement("canvas");
+    c.className = "confetti";
+    c.width = window.innerWidth; c.height = window.innerHeight;
+    document.body.appendChild(c);
+    var ctx = c.getContext("2d"), colours = ["#e4572e", "#e0a800", "#111111", "#ffffff"], bits = [];
+    for (var i = 0; i < 140; i++) bits.push({ x: c.width / 2, y: c.height * 0.55, vx: (Math.random() - 0.5) * 16, vy: -Math.random() * 16 - 4, s: 5 + Math.random() * 6, r: Math.random() * 6, c: colours[i % colours.length] });
+    var t = 0;
+    (function frame() {
+      ctx.clearRect(0, 0, c.width, c.height);
+      bits.forEach(function (b) { b.vy += 0.45; b.x += b.vx; b.y += b.vy; b.r += 0.2; ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.r); ctx.fillStyle = b.c; ctx.fillRect(-b.s / 2, -b.s / 2, b.s, b.s * 0.6); ctx.restore(); });
+      if (++t < 110) requestAnimationFrame(frame); else c.remove();
+    })();
+  }
+
+  function animate() {
+    // Progress bars fill up from empty, and big percentages count up.
+    document.querySelectorAll(".bar > span").forEach(function (b) {
+      var w = b.style.width; if (calm || !w) return;
+      b.style.width = "0"; requestAnimationFrame(function () { requestAnimationFrame(function () { b.style.width = w; }); });
+    });
+    document.querySelectorAll(".side-big").forEach(function (el) {
+      var target = parseInt(el.textContent, 10) || 0; if (calm || !target) return;
+      var start = performance.now();
+      (function tick(now) { var k = Math.min(1, (now - start) / 900); el.textContent = Math.round(target * k) + "%"; if (k < 1) requestAnimationFrame(tick); })(start);
+    });
+
+    // Cards and sections slide gently into view as you scroll.
+    if (!calm && "IntersectionObserver" in window) {
+      var items = document.querySelectorAll("main h2, .lesson-item, .panel, .callout, .q, .terms li, .side-card, .level, .table-scroll");
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
+      }, { rootMargin: "0px 0px -8% 0px" });
+      items.forEach(function (el, i) { el.classList.add("reveal"); el.style.transitionDelay = (el.classList.contains("side-card") ? (i % 5) * 70 : 0) + "ms"; io.observe(el); });
+    }
+
+    // Thin reading bar at the top shows how far through the lesson you are.
+    if (page === "lesson") {
+      var rb = document.createElement("div"); rb.className = "read-bar"; document.body.appendChild(rb);
+      var upd = function () { var h = document.documentElement; var k = h.scrollTop / Math.max(1, h.scrollHeight - h.clientHeight); rb.style.transform = "scaleX(" + Math.min(1, Math.max(0, k)) + ")"; };
+      window.addEventListener("scroll", upd, { passive: true }); upd();
+    }
+  }
+  animate();
 })();
