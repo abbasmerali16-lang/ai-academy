@@ -5,32 +5,71 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Abbas’ AI Academy</title>
 <meta name="description" content="Learn artificial intelligence from beginner to master, one level at a time.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234f46e5'/%3E%3Ctext x='16' y='21' font-size='14' font-family='sans-serif' font-weight='700' text-anchor='middle' fill='white'%3EAI%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23178582'/%3E%3Ctext x='16' y='21' font-size='14' font-family='sans-serif' font-weight='700' text-anchor='middle' fill='white'%3EAI%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Carlito:ital,wght@0,400;0,700;1,400&family=Oswald:wght@600;700&display=swap">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body data-page="home">
+<a class="skip" href="#main">Skip to content</a>
 <header class="site-header"><div class="wrap">
   <a class="brand" href="index.html"><span class="brand-mark">AI</span><span class="name">Abbas’ AI Academy</span></a>
   <nav class="nav"><a href="index.html" class="active">Courses</a><a href="glossary.html">Glossary</a></nav>
 </div></header>
-<main class="wrap">
-  <section class="hero">
-    <span class="eyebrow">Welcome, Abbas · Level 1 · Foundations</span>
-    <h1>Your path from AI beginner to master</h1>
-    <p class="lead">Abbas, this academy was built just for you. Start here: sixteen short lessons in four units explain what AI is, how machines learn, how chatbots and other AI tools work, how to use them well, and the rules and risks around them. You don't need any maths or coding to begin.</p>
-    <div class="actions">
-      <a class="btn" id="start-btn" href="lesson.html">Start Lesson 1</a>
-      <a class="btn secondary" href="glossary.html">Browse the glossary</a>
+<section class="hero-band">
+  <div class="hero-inner">
+    <div class="hero-copy">
+      <span class="eyebrow">Welcome, Abbas · Level 1 · Foundations</span>
+      <h1>Learn AI. From zero to master.</h1>
+      <p class="lead">Abbas, this academy was built just for you. Sixteen short lessons take you from "what is AI?" to using it well and knowing the rules. No maths or coding needed.</p>
+      <form class="hero-search" id="hero-search" role="search" autocomplete="off">
+        <label class="sr-only" for="hero-q">Search lessons and key terms</label>
+        <input id="hero-q" type="search" placeholder="Search lessons and key terms">
+        <button class="btn" type="submit">Search</button>
+      </form>
+      <div class="topic-slider" aria-label="Popular topics">
+        <button class="ts-arrow ts-prev" type="button" aria-label="Scroll topics left">‹</button>
+        <div class="topic-chips" id="topic-chips"></div>
+        <button class="ts-arrow ts-next" type="button" aria-label="Scroll topics right">›</button>
+      </div>
+      <div class="search-results" id="hero-results" hidden></div>
+      <div class="actions">
+        <a class="btn" id="start-btn" href="lesson.html">Start Lesson 1</a>
+        <a class="btn secondary" href="#units">See what you'll learn</a>
+      </div>
+      <p class="hero-trust"><span>Every lesson lists its sources</span><span>Hands-on activity in each lesson</span><span>Progress saved as you go</span></p>
     </div>
-    <div class="progress-card" id="progress"></div>
+    <div class="hero-visual" id="hero-visual" aria-label="Your next lesson"></div>
+  </div>
+</section>
+<div class="stats-band"><dl class="stats" id="stats"></dl></div>
+<main class="wrap" id="main">
+  <nav class="jump" aria-label="On this page"><a href="#units">Units</a><a href="#how">How it works</a><a href="#lessons">All lessons</a><a href="#road">Your road</a><a href="#faq">Questions</a></nav>
+
+  <section id="units">
+    <span class="kicker">Level 1 · Foundations</span>
+    <h2>Four units. One clear path.</h2>
+    <p>Each unit builds on the one before. Work through them in order, or jump to whatever you're curious about today.</p>
+    <div class="unit-cards" id="unit-cards"></div>
   </section>
 
-  <h2>Your Level 1 lessons</h2>
-  <p>Each lesson takes about 10 to 13 minutes, includes a hands-on activity, and ends with a short quiz. Pass the quiz to tick it off. Every lesson lists its sources so you can check facts and read further.</p>
-  <ol class="lesson-list" id="lesson-list"></ol>
+  <section id="how">
+    <span class="kicker">How it works</span>
+    <h2>Every lesson, four simple steps</h2>
+    <ol class="steps">
+      <li><b>Read</b><span>About 10 to 13 minutes of plain-English explanation with real examples.</span></li>
+      <li><b>Try</b><span>A hands-on activity, like sorting examples or setting a spam filter.</span></li>
+      <li><b>Pass</b><span>A short quiz. Pass it and the lesson is ticked off.</span></li>
+      <li><b>Dig deeper</b><span>Sources and further reading if you want more.</span></li>
+    </ol>
+  </section>
+
+  <section id="lessons">
+    <span class="kicker">All 16 lessons</span>
+    <h2>Your Level 1 lessons</h2>
+    <ol class="lesson-list" id="lesson-list"></ol>
+  </section>
 
   <section class="cert" id="certificate" hidden>
     <div class="big">LEVEL 1</div>
@@ -38,18 +77,39 @@
     <p>You've finished AI Foundations. You can explain what AI is, how it reasons and learns, how to judge whether it's any good, how chatbots and other AI tools work, and how to use AI responsibly and within the rules.</p>
   </section>
 
-  <h2>Your road to mastery</h2>
-  <div class="levels">
-    <div class="level current"><b>Level 1</b>Foundations<br><span>Available now</span></div>
-    <div class="level locked"><b>Level 2</b>Data &amp; Python basics<br><span>Coming soon</span></div>
-    <div class="level locked"><b>Level 3</b>Machine learning in practice<br><span>Coming soon</span></div>
-    <div class="level locked"><b>Level 4</b>Deep learning &amp; LLMs<br><span>Coming soon</span></div>
-    <div class="level locked"><b>Level 5</b>Mastery: build &amp; deploy<br><span>Coming soon</span></div>
-  </div>
+  <section id="road">
+    <span class="kicker">Beyond Level 1</span>
+    <h2>Your road to mastery</h2>
+    <div class="levels">
+      <div class="level current"><b>Level 1</b>Foundations<br><span>Available now</span></div>
+      <div class="level locked"><b>Level 2</b>Data &amp; Python basics<br><span>Coming soon</span></div>
+      <div class="level locked"><b>Level 3</b>Machine learning in practice<br><span>Coming soon</span></div>
+      <div class="level locked"><b>Level 4</b>Deep learning &amp; LLMs<br><span>Coming soon</span></div>
+      <div class="level locked"><b>Level 5</b>Mastery: build &amp; deploy<br><span>Coming soon</span></div>
+    </div>
+  </section>
+
+  <section id="faq">
+    <span class="kicker">Questions</span>
+    <h2>Good to know</h2>
+    <div class="faq">
+      <details><summary>Do I need maths or coding?</summary><p>No. Level 1 uses plain English and everyday examples. Maths and Python start gently in Level 2.</p></details>
+      <details><summary>How long does Level 1 take?</summary><p>About three hours in total. Each lesson is 10 to 13 minutes, so one a day gets you through in just over two weeks.</p></details>
+      <details><summary>Where do the facts come from?</summary><p>Each lesson is written fresh and checked against respected courses, textbooks and official guidance, such as Elements of AI, Russell and Norvig, the OECD and the EU AI Act. Every lesson lists its sources at the end.</p></details>
+      <details><summary>Where is my progress saved?</summary><p>In this browser on this device. If you switch device or clear your browser data, you'll start fresh.</p></details>
+      <details><summary>What if I fail a quiz?</summary><p>Nothing bad happens. Re-read the lesson and try again as many times as you like.</p></details>
+    </div>
+  </section>
+
+  <section class="cta-band">
+    <h2>Ready when you are, Abbas</h2>
+    <p>Ten minutes is all it takes to make progress today.</p>
+    <a class="btn" id="cta-btn" href="lesson.html">Start Lesson 1</a>
+  </section>
 
   <p style="margin-top:32px"><button class="btn secondary" type="button" id="reset">Reset my progress</button></p>
 </main>
-<footer><div class="wrap">Abbas’ AI Academy · Level 1: Foundations. Your progress is saved in this browser only.</div></footer>
+<footer class="site-footer" id="site-footer"></footer>
 <script src="assets/lessons.js"></script>
 <script src="assets/app.js"></script>
 </body></html>

@@ -56,11 +56,116 @@
     }
     var cert = $("#certificate");
     if (cert) cert.hidden = !!next;
+    renderLanding(next);
 
     var reset = $("#reset");
     if (reset) reset.onclick = function () {
       if (confirm("Abbas, reset all your Level 1 progress in this browser?")) { progress = {}; save(progress); renderHome(); }
     };
+  }
+
+  /* Home page landing sections: hero card, numbers strip, unit cards, closing call to action. */
+  function renderLanding(next) {
+    var UNITS = window.LEVEL1_UNITS || [];
+    var mins = LESSONS.reduce(function (a, l) { return a + l.minutes; }, 0);
+    var terms = LESSONS.reduce(function (a, l) { return a + l.terms.length; }, 0);
+    var n = doneCount(), pct = Math.round(100 * n / LESSONS.length);
+    var stats = $("#stats");
+    if (stats) stats.innerHTML = [[LESSONS.length, "short lessons"], [UNITS.length, "units"], ["~" + Math.round(mins / 60), "hours in total"], [terms, "key terms explained"]]
+      .map(function (x) { return "<div><dt>" + x[0] + "</dt><dd>" + x[1] + "</dd></div>"; }).join("");
+    var hv = $("#hero-visual");
+    if (hv) {
+      var l = next || LESSONS[LESSONS.length - 1], i = LESSONS.indexOf(l);
+      hv.innerHTML = '<div class="hv-card">' +
+        '<span class="hv-label">' + (next ? (n ? "Continue where you left off" : "Your first lesson") : "Level 1 complete") + "</span>" +
+        '<div class="hv-lesson"><span class="hv-num">' + (i + 1) + "</span><div><strong>" + esc(l.title) + "</strong><span>" + esc(l.summary) + "</span></div></div>" +
+        '<div class="hv-meta"><span>' + l.minutes + " min read</span><span>Activity + quiz</span></div>" +
+        '<a class="btn" href="lesson.html?id=' + l.id + '">' + (next ? "Open lesson " + (i + 1) : "Review lesson " + (i + 1)) + "</a></div>" +
+        '<div class="hv-card hv-progress"><div class="hv-row"><span>Your progress</span><b>' + pct + "%</b></div>" +
+        '<div class="bar"><span style="width:' + pct + '%"></span></div>' +
+        '<ul class="hv-units">' + UNITS.map(function (u) {
+          var ls = LESSONS.filter(function (x) { return x.unit === u.id; }), d = ls.filter(function (x) { return isDone(x.id); }).length;
+          return "<li><span>" + esc(u.title.replace(/^Unit (\d+) · /, "$1. ")) + "</span><b>" + d + "/" + ls.length + "</b></li>";
+        }).join("") + "</ul></div>" +
+        '<div class="hv-card hv-up"><span class="hv-label">Coming up after that</span><ol class="hv-list">' +
+        LESSONS.slice(i + 1, i + 4).map(function (x, k) {
+          return '<li><a href="lesson.html?id=' + x.id + '"><span class="hv-n">' + (i + k + 2) + "</span><span>" + esc(x.title) + "</span><em>" + x.minutes + " min</em></a></li>";
+        }).join("") + (i + 1 >= LESSONS.length ? "<li>You're at the end of Level 1.</li>" : "") + "</ol></div>";
+    }
+    var uc = $("#unit-cards");
+    if (uc) uc.innerHTML = UNITS.map(function (u, k) {
+      var ls = LESSONS.filter(function (x) { return x.unit === u.id; }), d = ls.filter(function (x) { return isDone(x.id); }).length;
+      var m = ls.reduce(function (a, x) { return a + x.minutes; }, 0);
+      var first = ls.find(function (x) { return !isDone(x.id); }) || ls[0];
+      return '<a class="unit-card" href="lesson.html?id=' + first.id + '"><span class="uc-num">Unit ' + (k + 1) + "</span>" +
+        "<strong>" + esc(u.title.replace(/^Unit \d+ · /, "")) + "</strong><span class=\"uc-blurb\">" + esc(u.blurb) + "</span>" +
+        '<span class="uc-meta">' + ls.length + " lessons · " + m + " min · " + d + "/" + ls.length + " done</span>" +
+        '<span class="bar"><span style="width:' + Math.round(100 * d / ls.length) + '%"></span></span>' +
+        '<span class="uc-go">' + (d === ls.length ? "Review unit" : d ? "Continue unit" : "Start unit") + " →</span></a>";
+    }).join("");
+    initSearch();
+    var cta = $("#cta-btn"), start = $("#start-btn");
+    if (cta && start) { cta.href = start.getAttribute("href"); cta.textContent = start.textContent; }
+  }
+
+  /* Home page search: lessons (title, summary, text) and key terms, plus a sliding row of topic buttons. */
+  var searchReady = false;
+  function initSearch() {
+    var form = $("#hero-search"), q = $("#hero-q"), out = $("#hero-results"), chips = $("#topic-chips");
+    if (!form || searchReady) return;
+    searchReady = true;
+    var strip = function (h) { return String(h).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").toLowerCase(); };
+    var index = LESSONS.map(function (l, i) { return { l: l, n: i + 1, t: l.title.toLowerCase(), s: l.summary.toLowerCase(), b: strip(l.body || ""), terms: l.terms }; });
+    function run(text) {
+      var words = text.toLowerCase().trim().split(/\s+/).filter(Boolean);
+      if (!words.length) { out.hidden = true; out.innerHTML = ""; return; }
+      var lessons = index.map(function (x) {
+        var sc = 0;
+        words.forEach(function (w) { if (x.t.indexOf(w) >= 0) sc += 6; if (x.s.indexOf(w) >= 0) sc += 3; if (x.b.indexOf(w) >= 0) sc += 1; });
+        return { x: x, sc: sc };
+      }).filter(function (r) { return r.sc > 0; }).sort(function (a, b) { return b.sc - a.sc; }).slice(0, 5);
+      var terms = [];
+      index.forEach(function (x) { x.terms.forEach(function (t) {
+        var hay = (t[0] + " " + t[1]).toLowerCase();
+        if (words.every(function (w) { return hay.indexOf(w) >= 0; })) terms.push({ t: t, x: x });
+      }); });
+      terms = terms.slice(0, 4);
+      out.innerHTML = (lessons.length ? '<p class="sr-head">Lessons</p>' + lessons.map(function (r) {
+          return '<a class="sr-item" href="lesson.html?id=' + r.x.l.id + '"><span class="sr-n">' + r.x.n + "</span><span><strong>" + esc(r.x.l.title) + "</strong><small>" + esc(r.x.l.summary) + "</small></span></a>";
+        }).join("") : "") +
+        (terms.length ? '<p class="sr-head">Key terms</p>' + terms.map(function (r) {
+          return '<a class="sr-item" href="lesson.html?id=' + r.x.l.id + '"><span class="sr-n">' + r.x.n + "</span><span><strong>" + esc(r.t[0]) + "</strong><small>" + esc(r.t[1]) + "</small></span></a>";
+        }).join("") : "") +
+        (!lessons.length && !terms.length ? '<p class="sr-none">Nothing found for "' + esc(text) + '", Abbas. Try a simpler word, like "data" or "chatbot".</p>' : "");
+      out.hidden = false;
+    }
+    q.addEventListener("input", function () { run(q.value); });
+    form.addEventListener("submit", function (e) { e.preventDefault(); run(q.value); var first = out.querySelector("a"); if (first) first.focus(); });
+    document.addEventListener("click", function (e) { if (!form.contains(e.target) && !out.contains(e.target) && !(chips && chips.parentNode.contains(e.target))) out.hidden = true; });
+    q.addEventListener("keydown", function (e) { if (e.key === "Escape") { out.hidden = true; } });
+
+    var topics = ["Chatbots", "Neural networks", "Prompting", "Machine learning", "Data", "Bias", "Generative AI", "Deep learning", "Probability", "Algorithms", "Computer vision", "Ethics", "AI laws", "Search", "History", "Accuracy"];
+    if (chips) {
+      chips.innerHTML = topics.map(function (t) { return '<button type="button" class="topic-chip">' + esc(t) + "</button>"; }).join("");
+      chips.addEventListener("click", function (e) {
+        var b = e.target.closest(".topic-chip"); if (!b || chips.dataset.dragged) return;
+        chips.querySelectorAll(".topic-chip").forEach(function (c) { c.classList.toggle("on", c === b); });
+        q.value = b.textContent; run(b.textContent);
+      });
+      var slider = chips.parentNode;
+      slider.querySelector(".ts-prev").onclick = function () { chips.scrollBy({ left: -chips.clientWidth * 0.7, behavior: "smooth" }); };
+      slider.querySelector(".ts-next").onclick = function () { chips.scrollBy({ left: chips.clientWidth * 0.7, behavior: "smooth" }); };
+      var edges = function () {
+        slider.classList.toggle("at-start", chips.scrollLeft < 4);
+        slider.classList.toggle("at-end", chips.scrollLeft + chips.clientWidth > chips.scrollWidth - 4);
+      };
+      chips.addEventListener("scroll", edges, { passive: true }); window.addEventListener("resize", edges); edges();
+      // Drag to slide with a mouse; touch screens swipe natively.
+      var down = false, startX = 0, startL = 0;
+      chips.addEventListener("pointerdown", function (e) { if (e.pointerType !== "mouse") return; down = true; startX = e.clientX; startL = chips.scrollLeft; delete chips.dataset.dragged; });
+      window.addEventListener("pointermove", function (e) { if (!down) return; var dx = e.clientX - startX; if (Math.abs(dx) > 5) chips.dataset.dragged = "1"; chips.scrollLeft = startL - dx; });
+      window.addEventListener("pointerup", function () { if (!down) return; down = false; setTimeout(function () { delete chips.dataset.dragged; }, 0); });
+    }
   }
 
   /* ---------- lesson page ---------- */
@@ -627,8 +732,7 @@
       right = progressCard() + termCard() + card("Jump to a unit", '<ol class="side-list">' + units.map(function (u, i) {
         var ls = LESSONS.filter(function (l) { return l.unit === u.id; }), d = ls.filter(function (l) { return isDone(l.id); }).length;
         return '<li><a href="#unit-' + (i + 1) + '">' + esc(u.title.replace(/^Unit \d+ · /, "")) + '</a><span class="side-count">' + d + "/" + ls.length + "</span></li>";
-      }).join("") + "</ol>") + card("How each lesson works",
-        '<ul class="side-steps"><li><b>Read</b> for about 10 to 13 minutes</li><li><b>Try</b> the hands-on activity</li><li><b>Pass</b> the short quiz to tick it off</li><li><b>Dig deeper</b> with the listed sources</li></ul>');
+      }).join("") + "</ol>");
     } else if (page === "lesson") {
       var art = document.getElementById("lesson");
       var heads = art.querySelectorAll("h2");
@@ -671,9 +775,51 @@
   }
   buildSides();
 
+  /* Footer with grouped, clearly labelled links (same on every page). */
+  function buildFooter() {
+    var f = document.getElementById("site-footer");
+    if (!f) return;
+    var UNITS = window.LEVEL1_UNITS || [];
+    var next = LESSONS.find(function (l) { return !isDone(l.id); });
+    f.innerHTML = '<div class="foot-grid">' +
+      '<div class="foot-brand"><p class="foot-name">Abbas’ AI Academy</p><p>Your path from AI beginner to master, one short lesson at a time.</p><p class="foot-note">Your progress is saved in this browser only.</p></div>' +
+      '<div><p class="foot-head">Learn</p><ul><li><a href="index.html">Home</a></li><li><a href="index.html#lessons">All 16 lessons</a></li><li><a href="glossary.html">Glossary</a></li>' +
+        (next ? '<li><a href="lesson.html?id=' + next.id + '">Next lesson: ' + esc(next.title) + "</a></li>" : "") + "</ul></div>" +
+      '<div><p class="foot-head">Level 1 units</p><ul>' + UNITS.map(function (u, i) {
+        var first = LESSONS.find(function (l) { return l.unit === u.id; });
+        return '<li><a href="lesson.html?id=' + first.id + '">' + (i + 1) + ". " + esc(u.title.replace(/^Unit \d+ · /, "")) + "</a></li>";
+      }).join("") + "</ul></div>" +
+      '<div><p class="foot-head">Your road</p><ul class="foot-plain"><li>Level 1: Foundations <span class="foot-tag">Now</span></li><li>Level 2: Data and Python</li><li>Level 3: Machine learning</li><li>Level 4: Deep learning and LLMs</li><li>Level 5: Mastery</li></ul></div>' +
+      "</div>" + '<div class="foot-bottom">Every lesson lists its sources so you can check the facts.</div>';
+  }
+  buildFooter();
+
+  /* Menu button for smaller screens, where the left-hand menu is hidden. */
+  function initMenu() {
+    var head = document.querySelector(".site-header .wrap");
+    if (!head || document.querySelector(".menu-btn")) return;
+    var btn = document.createElement("button");
+    btn.className = "menu-btn"; btn.type = "button"; btn.setAttribute("aria-expanded", "false"); btn.setAttribute("aria-controls", "drawer");
+    btn.innerHTML = '<span class="menu-icon" aria-hidden="true"></span>Menu';
+    head.insertBefore(btn, head.firstChild);
+    var drawer = document.createElement("div"); drawer.id = "drawer"; drawer.className = "drawer"; drawer.hidden = true;
+    document.body.appendChild(drawer);
+    function close() { drawer.hidden = true; document.body.classList.remove("menu-open"); btn.setAttribute("aria-expanded", "false"); }
+    btn.onclick = function () {
+      if (!drawer.hidden) return close();
+      drawer.innerHTML = '<div class="drawer-panel">' + navTab() + "</div>";
+      drawer.hidden = false; document.body.classList.add("menu-open"); btn.setAttribute("aria-expanded", "true");
+      var here = drawer.querySelector(".here a, a.here"); if (here) here.focus(); else { var a = drawer.querySelector("a"); if (a) a.focus(); }
+    };
+    drawer.addEventListener("click", function (e) { if (e.target === drawer || e.target.closest("a")) close(); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !drawer.hidden) { close(); btn.focus(); } });
+  }
+  initMenu();
+  document.querySelectorAll(".nav a.active").forEach(function (a) { a.setAttribute("aria-current", "page"); });
+
   /* Shrink long titles so each fits on one line; very long ones may still wrap at the minimum size. */
   function fitTitles() {
-    document.querySelectorAll("main h1, main h2").forEach(function (h) {
+    document.querySelectorAll("main h1, main h2, .hero-band h1").forEach(function (h) {
       h.style.fontSize = "";
       h.style.whiteSpace = "nowrap";
       var size = parseFloat(getComputedStyle(h).fontSize), min = h.tagName === "H1" ? 22 : 20;
@@ -695,7 +841,7 @@
     c.className = "confetti";
     c.width = window.innerWidth; c.height = window.innerHeight;
     document.body.appendChild(c);
-    var ctx = c.getContext("2d"), colours = ["#e4572e", "#e0a800", "#111111", "#ffffff"], bits = [];
+    var ctx = c.getContext("2d"), cs = getComputedStyle(document.documentElement), colours = [cs.getPropertyValue("--accent").trim() || "#e4572e", cs.getPropertyValue("--gold").trim() || "#e0a800", cs.getPropertyValue("--ink").trim() || "#111111", "#ffffff"], bits = [];
     for (var i = 0; i < 140; i++) bits.push({ x: c.width / 2, y: c.height * 0.55, vx: (Math.random() - 0.5) * 16, vy: -Math.random() * 16 - 4, s: 5 + Math.random() * 6, r: Math.random() * 6, c: colours[i % colours.length] });
     var t = 0;
     (function frame() {
@@ -719,7 +865,7 @@
 
     // Cards and sections slide gently into view as you scroll.
     if (!calm && "IntersectionObserver" in window) {
-      var items = document.querySelectorAll("main h2, .lesson-item, .panel, .callout, .q, .terms li, .side-card, .level, .table-scroll");
+      var items = document.querySelectorAll("main h2, .lesson-item, .panel, .callout, .q, .terms li, .side-card, .level, .table-scroll, .unit-card, .steps li, .faq details, .cta-band, .stats div");
       var io = new IntersectionObserver(function (entries) {
         entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
       }, { rootMargin: "0px 0px -8% 0px" });
