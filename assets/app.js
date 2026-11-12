@@ -103,8 +103,69 @@
         '<span class="bar"><span style="width:' + Math.round(100 * d / ls.length) + '%"></span></span>' +
         '<span class="uc-go">' + (d === ls.length ? "Review unit" : d ? "Continue unit" : "Start unit") + " →</span></a>";
     }).join("");
+    initSearch();
     var cta = $("#cta-btn"), start = $("#start-btn");
     if (cta && start) { cta.href = start.getAttribute("href"); cta.textContent = start.textContent; }
+  }
+
+  /* Home page search: lessons (title, summary, text) and key terms, plus a sliding row of topic buttons. */
+  var searchReady = false;
+  function initSearch() {
+    var form = $("#hero-search"), q = $("#hero-q"), out = $("#hero-results"), chips = $("#topic-chips");
+    if (!form || searchReady) return;
+    searchReady = true;
+    var strip = function (h) { return String(h).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").toLowerCase(); };
+    var index = LESSONS.map(function (l, i) { return { l: l, n: i + 1, t: l.title.toLowerCase(), s: l.summary.toLowerCase(), b: strip(l.body || ""), terms: l.terms }; });
+    function run(text) {
+      var words = text.toLowerCase().trim().split(/\s+/).filter(Boolean);
+      if (!words.length) { out.hidden = true; out.innerHTML = ""; return; }
+      var lessons = index.map(function (x) {
+        var sc = 0;
+        words.forEach(function (w) { if (x.t.indexOf(w) >= 0) sc += 6; if (x.s.indexOf(w) >= 0) sc += 3; if (x.b.indexOf(w) >= 0) sc += 1; });
+        return { x: x, sc: sc };
+      }).filter(function (r) { return r.sc > 0; }).sort(function (a, b) { return b.sc - a.sc; }).slice(0, 5);
+      var terms = [];
+      index.forEach(function (x) { x.terms.forEach(function (t) {
+        var hay = (t[0] + " " + t[1]).toLowerCase();
+        if (words.every(function (w) { return hay.indexOf(w) >= 0; })) terms.push({ t: t, x: x });
+      }); });
+      terms = terms.slice(0, 4);
+      out.innerHTML = (lessons.length ? '<p class="sr-head">Lessons</p>' + lessons.map(function (r) {
+          return '<a class="sr-item" href="lesson.html?id=' + r.x.l.id + '"><span class="sr-n">' + r.x.n + "</span><span><strong>" + esc(r.x.l.title) + "</strong><small>" + esc(r.x.l.summary) + "</small></span></a>";
+        }).join("") : "") +
+        (terms.length ? '<p class="sr-head">Key terms</p>' + terms.map(function (r) {
+          return '<a class="sr-item" href="lesson.html?id=' + r.x.l.id + '"><span class="sr-n">' + r.x.n + "</span><span><strong>" + esc(r.t[0]) + "</strong><small>" + esc(r.t[1]) + "</small></span></a>";
+        }).join("") : "") +
+        (!lessons.length && !terms.length ? '<p class="sr-none">Nothing found for "' + esc(text) + '", Abbas. Try a simpler word, like "data" or "chatbot".</p>' : "");
+      out.hidden = false;
+    }
+    q.addEventListener("input", function () { run(q.value); });
+    form.addEventListener("submit", function (e) { e.preventDefault(); run(q.value); var first = out.querySelector("a"); if (first) first.focus(); });
+    document.addEventListener("click", function (e) { if (!form.contains(e.target) && !out.contains(e.target) && !(chips && chips.parentNode.contains(e.target))) out.hidden = true; });
+    q.addEventListener("keydown", function (e) { if (e.key === "Escape") { out.hidden = true; } });
+
+    var topics = ["Chatbots", "Neural networks", "Prompting", "Machine learning", "Data", "Bias", "Generative AI", "Deep learning", "Probability", "Algorithms", "Computer vision", "Ethics", "AI laws", "Search", "History", "Accuracy"];
+    if (chips) {
+      chips.innerHTML = topics.map(function (t) { return '<button type="button" class="topic-chip">' + esc(t) + "</button>"; }).join("");
+      chips.addEventListener("click", function (e) {
+        var b = e.target.closest(".topic-chip"); if (!b || chips.dataset.dragged) return;
+        chips.querySelectorAll(".topic-chip").forEach(function (c) { c.classList.toggle("on", c === b); });
+        q.value = b.textContent; run(b.textContent);
+      });
+      var slider = chips.parentNode;
+      slider.querySelector(".ts-prev").onclick = function () { chips.scrollBy({ left: -chips.clientWidth * 0.7, behavior: "smooth" }); };
+      slider.querySelector(".ts-next").onclick = function () { chips.scrollBy({ left: chips.clientWidth * 0.7, behavior: "smooth" }); };
+      var edges = function () {
+        slider.classList.toggle("at-start", chips.scrollLeft < 4);
+        slider.classList.toggle("at-end", chips.scrollLeft + chips.clientWidth > chips.scrollWidth - 4);
+      };
+      chips.addEventListener("scroll", edges, { passive: true }); window.addEventListener("resize", edges); edges();
+      // Drag to slide with a mouse; touch screens swipe natively.
+      var down = false, startX = 0, startL = 0;
+      chips.addEventListener("pointerdown", function (e) { if (e.pointerType !== "mouse") return; down = true; startX = e.clientX; startL = chips.scrollLeft; delete chips.dataset.dragged; });
+      window.addEventListener("pointermove", function (e) { if (!down) return; var dx = e.clientX - startX; if (Math.abs(dx) > 5) chips.dataset.dragged = "1"; chips.scrollLeft = startL - dx; });
+      window.addEventListener("pointerup", function () { if (!down) return; down = false; setTimeout(function () { delete chips.dataset.dragged; }, 0); });
+    }
   }
 
   /* ---------- lesson page ---------- */

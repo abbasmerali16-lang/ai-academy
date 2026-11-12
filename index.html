@@ -22,6 +22,17 @@
       <span class="eyebrow">Welcome, Abbas · Level 1 · Foundations</span>
       <h1>Learn AI. From zero to master.</h1>
       <p class="lead">Abbas, this academy was built just for you. Sixteen short lessons take you from "what is AI?" to using it well and knowing the rules. No maths or coding needed.</p>
+      <form class="hero-search" id="hero-search" role="search" autocomplete="off">
+        <label class="sr-only" for="hero-q">Search lessons and key terms</label>
+        <input id="hero-q" type="search" placeholder="Search lessons and terms, e.g. neural networks">
+        <button class="btn" type="submit">Search</button>
+      </form>
+      <div class="topic-slider" aria-label="Popular topics">
+        <button class="ts-arrow ts-prev" type="button" aria-label="Scroll topics left">‹</button>
+        <div class="topic-chips" id="topic-chips"></div>
+        <button class="ts-arrow ts-next" type="button" aria-label="Scroll topics right">›</button>
+      </div>
+      <div class="search-results" id="hero-results" hidden></div>
       <div class="actions">
         <a class="btn" id="start-btn" href="lesson.html">Start Lesson 1</a>
         <a class="btn secondary" href="#units">See what you'll learn</a>
