@@ -56,11 +56,51 @@
     }
     var cert = $("#certificate");
     if (cert) cert.hidden = !!next;
+    renderLanding(next);
 
     var reset = $("#reset");
     if (reset) reset.onclick = function () {
       if (confirm("Abbas, reset all your Level 1 progress in this browser?")) { progress = {}; save(progress); renderHome(); }
     };
+  }
+
+  /* Home page landing sections: hero card, numbers strip, unit cards, closing call to action. */
+  function renderLanding(next) {
+    var UNITS = window.LEVEL1_UNITS || [];
+    var mins = LESSONS.reduce(function (a, l) { return a + l.minutes; }, 0);
+    var terms = LESSONS.reduce(function (a, l) { return a + l.terms.length; }, 0);
+    var n = doneCount(), pct = Math.round(100 * n / LESSONS.length);
+    var stats = $("#stats");
+    if (stats) stats.innerHTML = [[LESSONS.length, "short lessons"], [UNITS.length, "units"], ["~" + Math.round(mins / 60), "hours in total"], [terms, "key terms explained"]]
+      .map(function (x) { return "<div><dt>" + x[0] + "</dt><dd>" + x[1] + "</dd></div>"; }).join("");
+    var hv = $("#hero-visual");
+    if (hv) {
+      var l = next || LESSONS[LESSONS.length - 1], i = LESSONS.indexOf(l);
+      hv.innerHTML = '<div class="hv-card">' +
+        '<span class="hv-label">' + (next ? (n ? "Continue where you left off" : "Your first lesson") : "Level 1 complete") + "</span>" +
+        '<div class="hv-lesson"><span class="hv-num">' + (i + 1) + "</span><div><strong>" + esc(l.title) + "</strong><span>" + esc(l.summary) + "</span></div></div>" +
+        '<div class="hv-meta"><span>' + l.minutes + " min read</span><span>Activity + quiz</span></div>" +
+        '<a class="btn" href="lesson.html?id=' + l.id + '">' + (next ? "Open lesson " + (i + 1) : "Review lesson " + (i + 1)) + "</a></div>" +
+        '<div class="hv-card hv-progress"><div class="hv-row"><span>Your progress</span><b>' + pct + "%</b></div>" +
+        '<div class="bar"><span style="width:' + pct + '%"></span></div>' +
+        '<ul class="hv-units">' + UNITS.map(function (u) {
+          var ls = LESSONS.filter(function (x) { return x.unit === u.id; }), d = ls.filter(function (x) { return isDone(x.id); }).length;
+          return "<li><span>" + esc(u.title.replace(/^Unit (\d+) · /, "$1. ")) + "</span><b>" + d + "/" + ls.length + "</b></li>";
+        }).join("") + "</ul></div>";
+    }
+    var uc = $("#unit-cards");
+    if (uc) uc.innerHTML = UNITS.map(function (u, k) {
+      var ls = LESSONS.filter(function (x) { return x.unit === u.id; }), d = ls.filter(function (x) { return isDone(x.id); }).length;
+      var m = ls.reduce(function (a, x) { return a + x.minutes; }, 0);
+      var first = ls.find(function (x) { return !isDone(x.id); }) || ls[0];
+      return '<a class="unit-card" href="lesson.html?id=' + first.id + '"><span class="uc-num">Unit ' + (k + 1) + "</span>" +
+        "<strong>" + esc(u.title.replace(/^Unit \d+ · /, "")) + "</strong><span class=\"uc-blurb\">" + esc(u.blurb) + "</span>" +
+        '<span class="uc-meta">' + ls.length + " lessons · " + m + " min · " + d + "/" + ls.length + " done</span>" +
+        '<span class="bar"><span style="width:' + Math.round(100 * d / ls.length) + '%"></span></span>' +
+        '<span class="uc-go">' + (d === ls.length ? "Review unit" : d ? "Continue unit" : "Start unit") + " →</span></a>";
+    }).join("");
+    var cta = $("#cta-btn"), start = $("#start-btn");
+    if (cta && start) { cta.href = start.getAttribute("href"); cta.textContent = start.textContent; }
   }
 
   /* ---------- lesson page ---------- */
@@ -627,8 +667,7 @@
       right = progressCard() + termCard() + card("Jump to a unit", '<ol class="side-list">' + units.map(function (u, i) {
         var ls = LESSONS.filter(function (l) { return l.unit === u.id; }), d = ls.filter(function (l) { return isDone(l.id); }).length;
         return '<li><a href="#unit-' + (i + 1) + '">' + esc(u.title.replace(/^Unit \d+ · /, "")) + '</a><span class="side-count">' + d + "/" + ls.length + "</span></li>";
-      }).join("") + "</ol>") + card("How each lesson works",
-        '<ul class="side-steps"><li><b>Read</b> for about 10 to 13 minutes</li><li><b>Try</b> the hands-on activity</li><li><b>Pass</b> the short quiz to tick it off</li><li><b>Dig deeper</b> with the listed sources</li></ul>');
+      }).join("") + "</ol>");
     } else if (page === "lesson") {
       var art = document.getElementById("lesson");
       var heads = art.querySelectorAll("h2");
@@ -673,7 +712,7 @@
 
   /* Shrink long titles so each fits on one line; very long ones may still wrap at the minimum size. */
   function fitTitles() {
-    document.querySelectorAll("main h1, main h2").forEach(function (h) {
+    document.querySelectorAll("main h1, main h2, .hero-band h1").forEach(function (h) {
       h.style.fontSize = "";
       h.style.whiteSpace = "nowrap";
       var size = parseFloat(getComputedStyle(h).fontSize), min = h.tagName === "H1" ? 22 : 20;
@@ -719,7 +758,7 @@
 
     // Cards and sections slide gently into view as you scroll.
     if (!calm && "IntersectionObserver" in window) {
-      var items = document.querySelectorAll("main h2, .lesson-item, .panel, .callout, .q, .terms li, .side-card, .level, .table-scroll");
+      var items = document.querySelectorAll("main h2, .lesson-item, .panel, .callout, .q, .terms li, .side-card, .level, .table-scroll, .unit-card, .steps li, .faq details, .cta-band, .stats div");
       var io = new IntersectionObserver(function (entries) {
         entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
       }, { rootMargin: "0px 0px -8% 0px" });
