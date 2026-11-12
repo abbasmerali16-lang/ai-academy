@@ -86,7 +86,11 @@
         '<ul class="hv-units">' + UNITS.map(function (u) {
           var ls = LESSONS.filter(function (x) { return x.unit === u.id; }), d = ls.filter(function (x) { return isDone(x.id); }).length;
           return "<li><span>" + esc(u.title.replace(/^Unit (\d+) · /, "$1. ")) + "</span><b>" + d + "/" + ls.length + "</b></li>";
-        }).join("") + "</ul></div>";
+        }).join("") + "</ul></div>" +
+        '<div class="hv-card hv-up"><span class="hv-label">Coming up after that</span><ol class="hv-list">' +
+        LESSONS.slice(i + 1, i + 4).map(function (x, k) {
+          return '<li><a href="lesson.html?id=' + x.id + '"><span class="hv-n">' + (i + k + 2) + "</span><span>" + esc(x.title) + "</span><em>" + x.minutes + " min</em></a></li>";
+        }).join("") + (i + 1 >= LESSONS.length ? "<li>You're at the end of Level 1.</li>" : "") + "</ol></div>";
     }
     var uc = $("#unit-cards");
     if (uc) uc.innerHTML = UNITS.map(function (u, k) {
