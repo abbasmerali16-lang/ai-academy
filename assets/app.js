@@ -799,7 +799,7 @@
     c.className = "confetti";
     c.width = window.innerWidth; c.height = window.innerHeight;
     document.body.appendChild(c);
-    var ctx = c.getContext("2d"), colours = ["#e4572e", "#e0a800", "#111111", "#ffffff"], bits = [];
+    var ctx = c.getContext("2d"), cs = getComputedStyle(document.documentElement), colours = [cs.getPropertyValue("--accent").trim() || "#e4572e", cs.getPropertyValue("--gold").trim() || "#e0a800", cs.getPropertyValue("--ink").trim() || "#111111", "#ffffff"], bits = [];
     for (var i = 0; i < 140; i++) bits.push({ x: c.width / 2, y: c.height * 0.55, vx: (Math.random() - 0.5) * 16, vy: -Math.random() * 16 - 4, s: 5 + Math.random() * 6, r: Math.random() * 6, c: colours[i % colours.length] });
     var t = 0;
     (function frame() {
