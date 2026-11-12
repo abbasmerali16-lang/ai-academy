@@ -608,3 +608,26 @@ main > section[id] .unit-cards, main > section[id] .steps, main > section[id] .l
 @media (prefers-reduced-motion: reduce) { .drawer-panel { animation: none; } }
 body.menu-open { overflow: hidden; }
 .menu-btn + .brand { margin-right: auto; }
+
+/* ---------- Levels 2 to 5 ---------- */
+a.level { text-decoration: none; color: var(--text); }
+a.level.open:hover { border-color: var(--accent); }
+.nav-level-link { display: flex; justify-content: space-between; gap: 8px; text-decoration: none; color: #fff; padding: 2px 0; }
+.nav-level-link span:first-child { flex: 1; }
+.nav-level-link:hover span:first-child { text-decoration: underline; }
+.foot-soon { color: #8aa0b2; font-size: 13px; }
+
+/* Code: inline words, code blocks and the run-it-yourself Python box */
+.lesson code { font-family: Consolas, "Cascadia Mono", Menlo, monospace; font-size: .88em; background: var(--surface-2); border: 1px solid var(--border); padding: 0 4px; border-radius: 2px; }
+.lesson pre { font-family: Consolas, "Cascadia Mono", Menlo, monospace; font-size: 15px; line-height: 1.55; background: var(--ink); color: #e6eef3; padding: 14px 16px; overflow-x: auto; border-left: 4px solid var(--accent); text-align: left; hyphens: none; white-space: pre; margin: 14px 0; }
+.lesson pre code { background: none; border: 0; padding: 0; color: inherit; font-size: inherit; }
+.py-code { display: block; width: 100%; min-height: 120px; resize: vertical; font: 15px/1.55 Consolas, "Cascadia Mono", Menlo, monospace; background: var(--ink); color: #e6eef3; border: 0; border-left: 4px solid var(--accent); padding: 12px 14px; tab-size: 4; white-space: pre; overflow-x: auto; }
+.py-code:focus { outline: 2px solid var(--gold); outline-offset: 2px; }
+.py .chip-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 10px 0; }
+.py-out { min-height: 2.4em; margin: 0; background: var(--surface-2) !important; color: var(--text) !important; border-left: 4px solid var(--gold) !important; white-space: pre-wrap !important; }
+.py-out.err { border-left-color: var(--bad) !important; color: var(--bad) !important; }
+.py-status { font-size: 14px; color: var(--muted); margin: 0; }
+.nav-tab .nav-level-link { color: var(--gold); }
+.nav-locked + .nav-locked { margin-top: 6px; }
+.plot .bar-col { fill: var(--accent); }
+.plot text { fill: var(--muted); font-family: Calibri, Carlito, sans-serif; }
