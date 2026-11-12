@@ -202,7 +202,7 @@
     document.addEventListener("click", function (e) { if (!form.contains(e.target) && !out.contains(e.target) && !(chips && chips.parentNode.contains(e.target))) out.hidden = true; });
     q.addEventListener("keydown", function (e) { if (e.key === "Escape") { out.hidden = true; } });
 
-    var topics = ["Chatbots", "Neural networks", "Prompting", "Machine learning", "Python", "Data", "pandas", "Bias", "Generative AI", "Statistics", "Probability", "Deep learning", "Algorithms", "Matrices", "Overfitting", "Random forests", "Clustering", "Fairness", "Computer vision", "Ethics", "AI laws", "Privacy", "History", "Accuracy"];
+    var topics = ["Chatbots", "Neural networks", "Prompting", "Machine learning", "Python", "Data", "pandas", "Bias", "Generative AI", "Statistics", "Probability", "Deep learning", "Algorithms", "Matrices", "Overfitting", "Random forests", "Clustering", "Fairness", "Transformers", "Attention", "Diffusion", "RAG", "Agents", "Fine-tuning", "Computer vision", "Ethics", "AI laws", "Privacy", "History", "Accuracy"];
     if (chips) {
       chips.innerHTML = topics.map(function (t) { return '<button type="button" class="topic-chip">' + esc(t) + "</button>"; }).join("");
       chips.addEventListener("click", function (e) {
@@ -1001,6 +1001,101 @@
       };
       el.querySelector("[data-reset]").onclick = reset;
       reset();
+    },
+
+    /* ===== Level 4 activities ===== */
+
+    /* Attention: click a word to see which other words it draws information from (illustrative weights). */
+    "attention": function (el) {
+      var ending = "tired", focus = 7;
+      el.className = "panel";
+      el.innerHTML = "<h3>Try it: where does each word look?</h3><p>Click any word to see how strongly it attends to the others: darker gold means more attention. Start with <em>it</em>, then switch the last word and watch what <em>it</em> refers to. The weights here are illustrative, chosen to show the kind of pattern trained models really learn.</p>" +
+        '<div class="chip-row" role="group" aria-label="Last word"><button class="chip" type="button" data-end="tired">...too tired</button><button class="chip" type="button" data-end="wide">...too wide</button></div>' +
+        '<div class="att-row"></div><div class="neuron-out" aria-live="polite"></div>';
+      function words() { return ["The", "animal", "didn't", "cross", "the", "street", "because", "it", "was", "too", ending]; }
+      function scores(i) {
+        var w = words(), s = w.map(function (x, j) { return j === i ? 1 : Math.abs(j - i) === 1 ? 0.6 : 0.15; });
+        var t = ending === "tired";
+        if (w[i] === "it") { s[1] = t ? 2.2 : 0.4; s[5] = t ? 0.4 : 2.2; s[10] = 1; }
+        if (i === 10) { s[7] = 1.4; s[t ? 1 : 5] = 1.2; }
+        if (w[i] === "cross") { s[1] = 1.1; s[5] = 1.3; }
+        if (w[i] === "didn't") { s[3] = 1.3; }
+        if (w[i] === "animal" || w[i] === "street") { s[3] = 1.1; }
+        return s;
+      }
+      function draw() {
+        var w = words(), s = scores(focus), e = s.map(function (v) { return Math.exp(2 * v); }), tot = e.reduce(function (a, b) { return a + b; }, 0);
+        var p = e.map(function (v) { return v / tot; });
+        el.querySelector(".att-row").innerHTML = w.map(function (x, j) {
+          var pct = Math.round(p[j] * 100);
+          return '<button type="button" class="att-word' + (j === focus ? " att-focus" : "") + '" data-i="' + j + '" style="background:color-mix(in srgb, var(--gold) ' + Math.min(100, Math.round(p[j] * 160)) + '%, transparent)"><span>' + x + "</span><small>" + pct + "%</small></button>";
+        }).join("");
+        el.querySelectorAll("[data-end]").forEach(function (b) { b.classList.toggle("sel", b.dataset.end === ending); b.setAttribute("aria-pressed", b.dataset.end === ending); });
+        var top = -1; p.forEach(function (v, j) { if (j !== focus && (top < 0 || v > p[top])) top = j; });
+        el.querySelector(".neuron-out").innerHTML = "<strong>" + w[focus] + "</strong> pays most attention to <strong>" + w[top] + "</strong> (" + Math.round(p[top] * 100) + "%). " +
+          (w[focus] === "it" ? (ending === "tired" ? "Animals get tired, so <em>it</em> means the animal." : "Streets are wide, so <em>it</em> means the street.") + " One changed word at the end changes the link, and attention can make it in a single step." : "Its new vector will be a blend of these words' values, weighted by these percentages.");
+      }
+      el.addEventListener("click", function (ev) {
+        var b = ev.target.closest("button"); if (!b) return;
+        if (b.dataset.end) ending = b.dataset.end; else if (b.dataset.i) focus = +b.dataset.i;
+        draw();
+      });
+      draw();
+    },
+
+    /* Temperature: reshape a next-word distribution and sample from it. */
+    "temperature": function (el) {
+      var words = ["tea", "coffee", "milk", "water", "soup", "ink"], logits = [3.2, 3.0, 1.6, 1.2, 0.0, -2.0];
+      el.className = "panel";
+      el.innerHTML = "<h3>Try it: turn the temperature dial</h3><p>A model is choosing the word after <em>\"For breakfast I had a cup of...\"</em>. Move the temperature and watch the probabilities, then sample ten times.</p>" +
+        '<svg class="plot" viewBox="0 0 320 170" role="img" aria-label="Probability of each candidate next word"></svg>' +
+        '<label class="slider-row"><span>Temperature</span><input type="range" min="0.1" max="2" step="0.05" value="1"><output></output></label>' +
+        '<div class="chip-row"><button class="chip" type="button" data-sample>Sample 10 words</button></div>' +
+        '<div class="neuron-out" aria-live="polite"></div>';
+      var svg = el.querySelector("svg"), inp = el.querySelector("input"), p = [];
+      function probs(T) { var z = logits.map(function (l) { return l / T; }), m = Math.max.apply(null, z), e = z.map(function (v) { return Math.exp(v - m); }), s = e.reduce(function (a, b) { return a + b; }, 0); return e.map(function (v) { return v / s; }); }
+      function update(msg) {
+        var T = +inp.value; inp.nextElementSibling.textContent = T.toFixed(2);
+        p = probs(T);
+        svg.innerHTML = words.map(function (w, i) {
+          var y = 10 + i * 26, bw = Math.max(1, p[i] * 230);
+          return '<text x="4" y="' + (y + 13) + '" font-size="12">' + w + '</text><rect class="bar-col" x="60" y="' + y + '" width="' + bw.toFixed(1) + '" height="18"/><text x="' + (66 + bw).toFixed(1) + '" y="' + (y + 13) + '" font-size="11">' + (p[i] < 0.005 ? "<1" : Math.round(p[i] * 100)) + "%</text>";
+        }).join("");
+        el.querySelector(".neuron-out").innerHTML = msg || (T < 0.5 ? "Low temperature: the top word dominates. Predictable, good for facts and code." : T > 1.4 ? "High temperature: the odds flatten, so odd choices like <em>soup</em> or even <em>ink</em> start to appear." : "Around 1: the model's own probabilities, with some natural variety.");
+      }
+      el.querySelector("[data-sample]").onclick = function () {
+        var out = [];
+        for (var k = 0; k < 10; k++) { var r = Math.random(), c = 0, pick = words.length - 1; for (var i = 0; i < p.length; i++) { c += p[i]; if (r < c) { pick = i; break; } } out.push(words[pick]); }
+        update("Ten samples: <strong>" + out.join(", ") + "</strong>. Press again and you'll likely get a different mix: that's why the same question can get different answers.");
+      };
+      inp.addEventListener("input", function () { update(); }); update();
+    },
+
+    /* Diffusion's forward process: blend a picture with noise. */
+    "noise": function (el) {
+      var pic = [".....##.....", "....####....", ".....##.....", "....#..#....", "....####....", "....#..#....", "...######...", "...#....#...", "...######...", "..#......#..", "..########..", "############"];
+      var seed = 11, rnd = function () { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+      var g = function () { return Math.sqrt(-2 * Math.log(rnd() + 1e-9)) * Math.cos(2 * Math.PI * rnd()); };
+      var x0 = [], eps = [];
+      pic.forEach(function (row) { for (var c = 0; c < row.length; c++) { x0.push(row[c] === "#" ? 1 : -1); eps.push(g()); } });
+      el.className = "panel";
+      el.innerHTML = "<h3>Try it: bury a picture in noise</h3><p>This is the forward process. Slide right to add noise, step by step, until nothing of the lighthouse is left. A diffusion model is trained to undo one small step at a time; generating an image means starting at the far right and walking all the way back.</p>" +
+        '<svg class="plot noise-grid" viewBox="0 0 240 240" role="img" aria-label="A small lighthouse picture with adjustable noise"></svg>' +
+        '<label class="slider-row"><span>Noise step</span><input type="range" min="0" max="1000" step="10" value="0"><output></output></label>' +
+        '<div class="neuron-out" aria-live="polite"></div>';
+      var svg = el.querySelector("svg"), inp = el.querySelector("input");
+      function update() {
+        var t = +inp.value, ab = Math.pow(Math.cos((t / 1000) * Math.PI / 2), 2), h = "";
+        inp.nextElementSibling.textContent = t;
+        x0.forEach(function (v, i) {
+          var val = Math.sqrt(ab) * v + Math.sqrt(1 - ab) * eps[i], o = Math.max(0, Math.min(1, (val + 1.5) / 3));
+          h += '<rect x="' + (i % 12) * 20 + '" y="' + Math.floor(i / 12) * 20 + '" width="20" height="20" fill="var(--heading)" fill-opacity="' + o.toFixed(2) + '"/>';
+        });
+        svg.innerHTML = h;
+        el.querySelector(".neuron-out").innerHTML = "Step " + t + " of 1000: the mix is about <strong>" + Math.round(ab * 100) + "%</strong> picture and <strong>" + Math.round((1 - ab) * 100) + "%</strong> noise. " +
+          (t === 0 ? "The clean training image." : t >= 1000 ? "Pure static. Every generated image starts from something like this." : t > 700 ? "You can barely tell there was a picture. Denoising from here takes many careful steps." : "At each step the network is shown a picture like this and asked to predict the noise that was added.");
+      }
+      inp.addEventListener("input", update); update();
     }
   };
 
