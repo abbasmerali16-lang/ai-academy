@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Academy</title>
+<meta name="description" content="Learn artificial intelligence from beginner to master, one level at a time.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234f46e5'/%3E%3Ctext x='16' y='21' font-size='14' font-family='sans-serif' font-weight='700' text-anchor='middle' fill='white'%3EAI%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-page="home">
+<header class="site-header"><div class="wrap">
+  <a class="brand" href="index.html"><span class="brand-mark">AI</span><span class="name">AI Academy</span></a>
+  <nav class="nav"><a href="index.html" class="active">Courses</a><a href="glossary.html">Glossary</a></nav>
+</div></header>
+<main class="wrap">
+  <section class="hero">
+    <span class="eyebrow">Level 1 · Foundations</span>
+    <h1>Learn AI from zero, one level at a time.</h1>
+    <p class="lead">Start here if you're new. Eight short lessons explain what AI is, how machines learn, how chatbots work, and how to use AI wisely. No maths or coding needed.</p>
+    <div class="actions">
+      <a class="btn" id="start-btn" href="lesson.html">Start Lesson 1</a>
+      <a class="btn secondary" href="glossary.html">Browse the glossary</a>
+    </div>
+    <div class="progress-card" id="progress"></div>
+  </section>
+
+  <h2>Level 1 lessons</h2>
+  <p>Each lesson takes about 10 minutes and ends with a short quiz. Pass the quiz to tick it off.</p>
+  <ol class="lesson-list" id="lesson-list"></ol>
+
+  <section class="cert" id="certificate" hidden>
+    <div class="big">🎓</div>
+    <h2 style="margin-top:8px">Level 1 complete</h2>
+    <p>You've finished AI Foundations. You can explain what AI is, how it learns, how chatbots work, and how to use it responsibly.</p>
+  </section>
+
+  <h2>Your path to mastery</h2>
+  <div class="levels">
+    <div class="level current"><b>Level 1</b>Foundations<br><span>Available now</span></div>
+    <div class="level locked"><b>Level 2</b>Data &amp; Python basics<br><span>Coming soon</span></div>
+    <div class="level locked"><b>Level 3</b>Machine learning in practice<br><span>Coming soon</span></div>
+    <div class="level locked"><b>Level 4</b>Deep learning &amp; LLMs<br><span>Coming soon</span></div>
+    <div class="level locked"><b>Level 5</b>Mastery: build &amp; deploy<br><span>Coming soon</span></div>
+  </div>
+
+  <p style="margin-top:32px"><button class="btn secondary" type="button" id="reset">Reset my progress</button></p>
+</main>
+<footer><div class="wrap">AI Academy · Level 1: Foundations. Progress is saved in this browser only.</div></footer>
+<script src="assets/lessons.js"></script>
+<script src="assets/app.js"></script>
+</body></html>
