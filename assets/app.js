@@ -37,6 +37,7 @@
   }
   function save(p) {
     try { localStorage.setItem(KEY, JSON.stringify(p)); } catch (e) { /* storage blocked: progress just won't persist */ }
+    acctChanged(p);
   }
   var progress = load();
   function isDone(id) { return !!(progress[id] && progress[id].passed); }
@@ -1324,10 +1325,10 @@
       '<a class="tn-link' + (page === "glossary" ? " active" : "") + '" href="glossary.html">Glossary</a>' +
       '<a class="tn-link' + (page === "review" ? " active" : "") + '" href="review.html">Review</a>' +
       '<a class="tn-link' + (page === "me" ? " active" : "") + '" href="me.html">My learning</a>' +
-      displayMenu() +
+      displayMenu() + accountMenu() +
       // The level badge only shows inside a level (a lesson or that level's lesson list).
       (page === "lesson" || page === "lessons" ? '<a class="tn-pill" href="' + lessonsHref(LV.n) + '" title="Your progress in Level ' + LV.n + '">Level ' + LV.n + " · " + n + "/" + t + "</a>" : "");
-    wireDisplay(nav);
+    wireDisplay(nav); wireAccount(nav);
     var items = nav.querySelectorAll(".tn-item");
     function closeAll(except) { items.forEach(function (it) { if (it !== except) { it.classList.remove("open"); it.querySelector(".tn-btn").setAttribute("aria-expanded", "false"); } }); }
     items.forEach(function (it) {
@@ -1407,7 +1408,7 @@
   var extras = loadKey(EX_KEY);
   ["days", "notes", "cards", "tests"].forEach(function (k) { if (!extras[k] || typeof extras[k] !== "object") extras[k] = {}; });
   if (!extras.goal) extras.goal = 1;
-  function saveExtras() { saveKey(EX_KEY, extras); }
+  function saveExtras() { saveKey(EX_KEY, extras); acctChanged(); }
 
   function heroToBand() {
     document.querySelectorAll(".page-band").forEach(function (b) { b.remove(); });
@@ -1426,6 +1427,250 @@
     return n;
   }
   function todayLessons() { var d = extras.days[dayKey()]; return d ? d.l || 0 : 0; }
+
+  /* ---------- account: sign in once, progress follows you to every device ----------
+     Uses a Supabase project named in assets/config.js. With no project named
+     (or on the Claude-hosted copy), all of this stays switched off and the
+     site keeps saving in this browser only. */
+  var ACCT = window.AIA_ACCOUNT && window.AIA_ACCOUNT.url && window.AIA_ACCOUNT.key ? {
+    url: String(window.AIA_ACCOUNT.url).replace(/\/+$/, ""), key: window.AIA_ACCOUNT.key,
+    table: "academy_progress", state: "out", msg: "", timer: 0, busy: false, again: false, last: 0
+  } : null;
+  var SESS_KEY = "aiAcademy.session.v1", SYNC_KEY = "aiAcademy.sync.v1", REMEMBER_KEY = "aiAcademy.remember";
+  function remembered() { try { return localStorage.getItem(REMEMBER_KEY) !== "0"; } catch (e) { return true; } }
+  function sessStore() { try { return remembered() ? localStorage : sessionStorage; } catch (e) { return null; } }
+  function getSess() { try { return JSON.parse(sessStore().getItem(SESS_KEY)) || null; } catch (e) { return null; } }
+  function setSess(s) {
+    try {
+      localStorage.removeItem(SESS_KEY); sessionStorage.removeItem(SESS_KEY);
+      if (s) sessStore().setItem(SESS_KEY, JSON.stringify(s));
+    } catch (e) { /* storage blocked */ }
+  }
+  var syncInfo = loadKey(SYNC_KEY);
+  function saveSyncInfo() { saveKey(SYNC_KEY, syncInfo); }
+
+  // Called whenever progress or extras are saved in this browser.
+  function acctChanged(p) {
+    if (!syncInfo) return;
+    syncInfo.changed = Date.now();
+    if (p && typeof p === "object" && !Object.keys(p).length) syncInfo.resetAt = syncInfo.changed;
+    syncInfo.dirty = true; saveSyncInfo();
+    if (!ACCT || ACCT.state !== "in") return;
+    clearTimeout(ACCT.timer); ACCT.timer = setTimeout(acctPush, 1500);
+  }
+
+  function api(path, opts) {
+    opts = opts || {};
+    var h = { apikey: ACCT.key, "Content-Type": "application/json" };
+    if (opts.token) h.Authorization = "Bearer " + opts.token;
+    if (opts.prefer) h.Prefer = opts.prefer;
+    return fetch(ACCT.url + path, { method: opts.method || "GET", headers: h, body: opts.body ? JSON.stringify(opts.body) : undefined, keepalive: !!opts.keepalive })
+      .then(function (r) {
+        return r.text().then(function (t) {
+          var d = null; try { d = t ? JSON.parse(t) : null; } catch (e) { d = null; }
+          if (!r.ok) { var err = new Error((d && (d.msg || d.message || d.error_description)) || ("HTTP " + r.status)); err.status = r.status; throw err; }
+          return d;
+        });
+      });
+  }
+  function keepSess(d, email) {
+    var s = { at: d.access_token, rt: d.refresh_token, exp: Date.now() + (d.expires_in || 3600) * 1000, email: email || (d.user && d.user.email) || "", id: d.user && d.user.id };
+    setSess(s); return s;
+  }
+  // A fresh sign-in token, renewing it quietly when it is about to run out.
+  function token() {
+    var s = getSess();
+    if (!s) return Promise.reject(new Error("signed out"));
+    if (s.exp - Date.now() > 60000) return Promise.resolve(s);
+    return api("/auth/v1/token?grant_type=refresh_token", { method: "POST", body: { refresh_token: s.rt } })
+      .then(function (d) { return keepSess(d, s.email); }, function (e) {
+        if (e.status === 400 || e.status === 401) { setSess(null); acctSet("out", "You were signed out. Sign in again to keep saving to your account."); }
+        throw e;
+      });
+  }
+
+  function mergeInto(local, remote, remoteNewer) {
+    var p = local.p, x = local.x, rp = remote.p || {}, rx = remote.x || {};
+    Object.keys(rp).forEach(function (id) {
+      var a = p[id] || {}, b = rp[id] || {};
+      p[id] = { passed: !!(a.passed || b.passed), best: Math.max(a.best || 0, b.best || 0) };
+    });
+    var rd = rx.days || {};
+    Object.keys(rd).forEach(function (k) {
+      var a = x.days[k] || {}, b = rd[k] || {};
+      x.days[k] = { l: Math.max(a.l || 0, b.l || 0), r: Math.max(a.r || 0, b.r || 0) };
+    });
+    var rt = rx.tests || {};
+    Object.keys(rt).forEach(function (k) {
+      var a = x.tests[k], b = rt[k];
+      if (!a) { x.tests[k] = b; return; }
+      x.tests[k] = { best: Math.max(a.best || 0, b.best || 0), passed: !!(a.passed || b.passed), date: a.passed && b.passed ? (a.date < b.date ? a.date : b.date) : (a.passed ? a.date : b.date) };
+    });
+    ["notes", "cards"].forEach(function (k) {
+      var r = rx[k] || {};
+      Object.keys(r).forEach(function (id) { if (!(id in x[k]) || remoteNewer) x[k][id] = r[id]; });
+    });
+    if (rx.goal && (remoteNewer || !x.goal)) x.goal = rx.goal;
+  }
+  function stable(v) {
+    if (Array.isArray(v)) return "[" + v.map(stable).join(",") + "]";
+    if (v && typeof v === "object") return "{" + Object.keys(v).sort().map(function (k) { return JSON.stringify(k) + ":" + stable(v[k]); }).join(",") + "}";
+    return JSON.stringify(v);
+  }
+  function body() { return { v: 1, p: progress, x: extras, resetAt: syncInfo.resetAt || 0 }; }
+
+  function acctPull() {
+    if (!ACCT || ACCT.busy) return Promise.resolve();
+    ACCT.busy = true; acctSet("syncing");
+    return token().then(function (s) {
+      return api("/rest/v1/" + ACCT.table + "?select=data,updated_at&user_id=eq." + encodeURIComponent(s.id), { token: s.at }).then(function (rows) {
+        var row = rows && rows[0], remote = row && row.data;
+        var before = stable({ p: progress, x: extras });
+        if (remote && remote.v === 1) {
+          var rReset = remote.resetAt || 0, lReset = syncInfo.resetAt || 0;
+          if (rReset > lReset) {
+            // Progress was reset on another device: start again from the account's copy.
+            progress = {}; extras = { days: {}, notes: {}, cards: {}, tests: {}, goal: extras.goal || 1 };
+            syncInfo.resetAt = rReset;
+          }
+          if (!(lReset > rReset && syncInfo.dirty)) {
+            var remoteNewer = Date.parse(row.updated_at) > (syncInfo.changed || 0);
+            mergeInto({ p: progress, x: extras }, remote, remoteNewer);
+          }
+        }
+        var after = stable({ p: progress, x: extras });
+        if (after !== before) {
+          try { localStorage.setItem(KEY, JSON.stringify(progress)); localStorage.setItem(EX_KEY, JSON.stringify(extras)); } catch (e) { /* storage blocked */ }
+        }
+        syncInfo.lastPull = Date.now(); saveSyncInfo();
+        ACCT.busy = false;
+        var needPush = !remote || syncInfo.dirty || stable({ p: remote.p, x: remote.x }) !== after;
+        if (after !== before) acctRefresh();
+        return needPush ? acctPush() : acctSet("in");
+      });
+    }).catch(function (e) { ACCT.busy = false; if (getSess()) acctSet("in", "Couldn’t reach your account just now, so this device is saving locally and will try again."); });
+  }
+  function acctPush(keepalive) {
+    if (!ACCT || !getSess()) return Promise.resolve();
+    if (ACCT.busy && !keepalive) { ACCT.again = true; return Promise.resolve(); }
+    clearTimeout(ACCT.timer); ACCT.busy = true; acctSet("syncing");
+    var sentAt = Date.now();
+    return token().then(function (s) {
+      return api("/rest/v1/" + ACCT.table + "?on_conflict=user_id", {
+        method: "POST", token: s.at, prefer: "resolution=merge-duplicates,return=minimal", keepalive: keepalive,
+        body: { user_id: s.id, data: body(), updated_at: new Date().toISOString() }
+      });
+    }).then(function () {
+      ACCT.busy = false; ACCT.last = Date.now();
+      if (!syncInfo.changed || syncInfo.changed <= sentAt) syncInfo.dirty = false;
+      saveSyncInfo(); acctSet("in");
+      if (ACCT.again) { ACCT.again = false; return acctPush(); }
+    }, function () { ACCT.busy = false; if (getSess()) acctSet("in", "Couldn’t reach your account just now, so this device is saving locally and will try again."); });
+  }
+  // After new progress arrives from the account, redraw what is on screen.
+  function acctRefresh() {
+    if (typeof route === "function") { route(); return; }
+    var typing = document.activeElement && /TEXTAREA|INPUT/.test(document.activeElement.tagName);
+    // Reload once so every number on the page is up to date (never twice in a row).
+    if (!typing && Date.now() - (syncInfo.reloadedAt || 0) > 15000) { syncInfo.reloadedAt = Date.now(); saveSyncInfo(); location.reload() }
+  }
+
+  function acctSend(email, keep) {
+    try { localStorage.setItem(REMEMBER_KEY, keep ? "1" : "0"); localStorage.setItem("aiAcademy.email", email); } catch (e) { /* storage blocked */ }
+    var back = location.origin + location.pathname + location.search;
+    acctSet("sending");
+    return api("/auth/v1/otp?redirect_to=" + encodeURIComponent(back), { method: "POST", body: { email: email, create_user: true } })
+      .then(function () { acctSet("sent"); }, function (e) {
+        acctSet("out", e.status === 429 ? "Too many sign-in emails in a short time. Please wait a few minutes and try again." : "That didn’t work: " + e.message);
+      });
+  }
+  function acctSignOut() {
+    var s = getSess();
+    if (s) api("/auth/v1/logout", { method: "POST", token: s.at }).catch(function () {});
+    setSess(null); acctSet("out", "Signed out. Your progress is still saved in your account and in this browser.");
+  }
+  // Finish signing in when Abbas arrives from the email link.
+  function acctLanding() {
+    var h = location.hash.replace(/^#/, "");
+    if (!/(^|&)(access_token|error_description)=/.test(h)) return null;
+    var q = new URLSearchParams(h);
+    history.replaceState(null, "", location.pathname + location.search);
+    if (q.get("error_description")) { acctSet("out", "That sign-in link didn’t work (" + q.get("error_description").replace(/\+/g, " ") + "). Links work once and run out after an hour, so ask for a new one."); return null; }
+    var d = { access_token: q.get("access_token"), refresh_token: q.get("refresh_token"), expires_in: +q.get("expires_in") || 3600 };
+    return api("/auth/v1/user", { token: d.access_token }).then(function (u) {
+      d.user = u; keepSess(d); ACCT.welcome = true;
+    }, function () { acctSet("out", "That sign-in link didn’t work. Please ask for a new one."); });
+  }
+  function acctStart() {
+    if (!ACCT) return;
+    Promise.resolve(acctLanding()).then(function () {
+      if (!getSess()) { if (ACCT.state !== "out" || !ACCT.msg) acctSet("out", ACCT.msg); return; }
+      acctSet("in", ACCT.welcome ? "Welcome, Abbas. You’re signed in, and your progress now saves to your account." : "");
+      acctPull();
+    });
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "visible" && getSess() && Date.now() - (syncInfo.lastPull || 0) > 30000) acctPull();
+    });
+    window.addEventListener("pagehide", function () { if (ACCT.timer && getSess()) acctPush(true); });
+  }
+
+  function ago(t) {
+    if (!t) return "";
+    var s = Math.round((Date.now() - t) / 1000);
+    return s < 45 ? "just now" : s < 3600 ? Math.round(s / 60) + " min ago" : "earlier today";
+  }
+  function accountPanel() {
+    var s = getSess(), st = ACCT.state;
+    var note = ACCT.msg ? '<p class="acct-msg">' + esc(ACCT.msg) + "</p>" : "";
+    if (s) {
+      return '<p class="dd-head">Your account</p><p class="acct-who">Signed in as <strong>' + esc(s.email) + "</strong></p>" + note +
+        '<p class="acct-status">' + (st === "syncing" ? "Saving…" : ACCT.last ? "Progress saved to your account " + ago(ACCT.last) + "." : "Your progress saves to your account automatically.") + "</p>" +
+        '<p><button class="btn secondary" type="button" data-acct="out">Sign out</button></p>';
+    }
+    if (st === "sent") {
+      return '<p class="dd-head">Check your email</p><p>Abbas, I’ve sent you a sign-in link. Open it on this device to finish signing in. It works once and runs out after an hour.</p>' +
+        '<p><button class="btn secondary" type="button" data-acct="again">Use a different email</button></p>';
+    }
+    var em = ""; try { em = localStorage.getItem("aiAcademy.email") || ""; } catch (e) { em = ""; }
+    return '<p class="dd-head">Sign in</p><p>Sign in once and your progress, notes, streak and test scores follow you to every device.</p>' + note +
+      '<form class="acct-form" data-acct="form"><label for="acct-email-' + (++accountPanel.n) + '">Email</label><input type="email" required autocomplete="email" id="acct-email-' + accountPanel.n + '" value="' + esc(em) + '" placeholder="you@example.com">' +
+      '<label class="acct-keep"><input type="checkbox"' + (remembered() ? " checked" : "") + "> Keep me signed in on this device</label>" +
+      '<button class="btn" type="submit"' + (st === "sending" ? " disabled" : "") + ">" + (st === "sending" ? "Sending…" : "Email me a sign-in link") + "</button></form>" +
+      '<p class="acct-small"><em>No password needed. Untick the box on a shared computer, and you’ll be signed out when you close the browser.</em></p>';
+  }
+  accountPanel.n = 0;
+  function accountMenu() {
+    if (!ACCT) return "";
+    return '<div class="tn-item tn-account"><button class="tn-btn" type="button" aria-expanded="false">' + (getSess() ? "Account" : "Sign in") + "</button>" +
+      '<div class="dd dd-account">' + accountPanel() + "</div></div>";
+  }
+  function wireAccount(root) {
+    if (!ACCT) return;
+    root.querySelectorAll(".dd-account, .acct-box").forEach(function (box) {
+      if (box.dataset.wired) return;
+      box.dataset.wired = "1";
+      box.addEventListener("click", function (e) {
+        e.stopPropagation();
+        var b = e.target.closest("[data-acct]"); if (!b || b.tagName === "FORM") return;
+        if (b.dataset.acct === "out") acctSignOut();
+        if (b.dataset.acct === "again") acctSet("out", "");
+      });
+      box.addEventListener("submit", function (e) {
+        var f = e.target; e.preventDefault();
+        acctSend(f.querySelector("input[type=email]").value.trim(), f.querySelector("input[type=checkbox]").checked);
+      });
+    });
+  }
+  // Redraw every account panel on the page (top menu, phone menu, My learning).
+  function acctSet(state, msg) {
+    if (!ACCT) return;
+    ACCT.state = state; if (msg !== undefined) ACCT.msg = msg;
+    document.querySelectorAll(".dd-account, .acct-box").forEach(function (box) {
+      if (box.contains(document.activeElement) && document.activeElement.tagName === "INPUT") return;
+      box.innerHTML = accountPanel();
+    });
+    document.querySelectorAll(".tn-account > .tn-btn").forEach(function (b) { b.textContent = getSess() ? "Account" : "Sign in"; });
+  }
 
   /* ---------- comfort settings: text size and dark mode ---------- */
   var prefs = loadKey(PREF_KEY);
@@ -1666,7 +1911,9 @@
       (certs.length ? certs.map(function (m) { return certHTML(m, extras.tests[m.n]); }).join("") : '<p class="rv-note"><em>Pass a level test to earn a certificate.</em></p>') +
       '<ul class="test-links">' + READY.map(function (m) { var t = extras.tests[m.n]; return '<li><a href="review.html?test=' + m.n + '">Level ' + m.n + " test: " + esc(m.name) + "</a><span>" + (t ? (t.passed ? "Passed, best " : "Best ") + t.best + "/" + TEST_LEN : "Not taken yet") + "</span></li>"; }).join("") + "</ul></section>" +
       '<section id="move"><span class="kicker">Laptop, phone, tablet</span><h2>Move my progress</h2>' +
-      '<p>Your progress is saved in this browser only. To carry it to another device, copy your save code here, send it to yourself (for example by email), then paste it on the other device.</p>' +
+      (ACCT ? '<div class="acct-box acct-page">' + accountPanel() + "</div>" +
+        '<p class="rv-note"><em>Not signed in on a device? You can still carry your progress by hand: copy your save code here, send it to yourself, then paste it on the other device.</em></p>'
+        : '<p>Your progress is saved in this browser only. To carry it to another device, copy your save code here, send it to yourself (for example by email), then paste it on the other device.</p>') +
       '<div class="move-grid"><div><h3>1. Copy my code</h3><textarea id="code-out" readonly rows="4" aria-label="Your save code"></textarea><p><button class="btn" type="button" id="code-copy">Copy code</button> <span class="code-msg" id="copy-msg"></span></p></div>' +
       '<div><h3>2. Paste a code here</h3><textarea id="code-in" rows="4" aria-label="Paste a save code" placeholder="Paste a code that starts with AIA1-"></textarea><p><button class="btn secondary" type="button" id="code-load">Load this code</button> <span class="code-msg" id="load-msg"></span></p></div></div>' +
       '<p style="margin-top:28px"><button class="btn secondary" type="button" id="reset-all">Reset all my progress</button></p></section>';
@@ -1690,7 +1937,7 @@
       if (confirm("Abbas, reset all your progress, notes, streak and test scores in this browser?")) { progress = {}; save(progress); extras = { days: {}, notes: {}, cards: {}, tests: {}, goal: 1 }; saveExtras(); location.reload(); }
     };
     main.querySelectorAll("[data-goal]").forEach(function (b) { b.onclick = function () { extras.goal = +b.dataset.goal; saveExtras(); renderMe(); fitTitles(); location.hash = "streak"; }; });
-    wirePrint(main);
+    wirePrint(main); wireAccount(main);
     heroToBand();
   }
 
@@ -1772,6 +2019,7 @@
   else if (page === "lesson") lessonExtras();
   else if (page === "home") homeExtras();
   else if (page === "lessons") lessonsExtras();
+  acctStart();
 
 
 
@@ -1809,8 +2057,8 @@
     function close() { drawer.hidden = true; document.body.classList.remove("menu-open"); btn.setAttribute("aria-expanded", "false"); }
     btn.onclick = function () {
       if (!drawer.hidden) return close();
-      drawer.innerHTML = '<div class="drawer-panel">' + navTab() + '<div class="drawer-display">' + displayMenu() + "</div></div>";
-      wireDisplay(drawer);
+      drawer.innerHTML = '<div class="drawer-panel">' + navTab() + '<div class="drawer-display">' + displayMenu() + (ACCT ? '<div class="acct-box">' + accountPanel() + "</div>" : "") + "</div></div>";
+      wireDisplay(drawer); wireAccount(drawer);
       drawer.hidden = false; document.body.classList.add("menu-open"); btn.setAttribute("aria-expanded", "true");
       var here = drawer.querySelector(".here a, a.here"); if (here) here.focus(); else { var a = drawer.querySelector("a"); if (a) a.focus(); }
     };
