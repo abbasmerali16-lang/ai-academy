@@ -202,7 +202,7 @@
     document.addEventListener("click", function (e) { if (!form.contains(e.target) && !out.contains(e.target) && !(chips && chips.parentNode.contains(e.target))) out.hidden = true; });
     q.addEventListener("keydown", function (e) { if (e.key === "Escape") { out.hidden = true; } });
 
-    var topics = ["Chatbots", "Neural networks", "Prompting", "Machine learning", "Python", "Data", "pandas", "Bias", "Generative AI", "Statistics", "Probability", "Deep learning", "Algorithms", "Matrices", "Overfitting", "Random forests", "Clustering", "Fairness", "Transformers", "Attention", "Diffusion", "RAG", "Agents", "Fine-tuning", "Computer vision", "Ethics", "AI laws", "Privacy", "History", "Accuracy"];
+    var topics = ["Chatbots", "Neural networks", "Prompting", "Machine learning", "Python", "Data", "pandas", "Bias", "Generative AI", "Statistics", "Probability", "Deep learning", "Algorithms", "Matrices", "Overfitting", "Random forests", "Clustering", "Fairness", "Transformers", "Attention", "Diffusion", "RAG", "Agents", "Fine-tuning", "Evals", "Security", "Red teaming", "Drift", "Interpretability", "Careers", "Computer vision", "Ethics", "AI laws", "Privacy", "History", "Accuracy"];
     if (chips) {
       chips.innerHTML = topics.map(function (t) { return '<button type="button" class="topic-chip">' + esc(t) + "</button>"; }).join("");
       chips.addEventListener("click", function (e) {
@@ -1096,6 +1096,42 @@
           (t === 0 ? "The clean training image." : t >= 1000 ? "Pure static. Every generated image starts from something like this." : t > 700 ? "You can barely tell there was a picture. Denoising from here takes many careful steps." : "At each step the network is shown a picture like this and asked to predict the noise that was added.");
       }
       inp.addEventListener("input", update); update();
+    },
+
+    /* Drift: shift live data away from training data and watch the PSI. */
+    "drift": function (el) {
+      var cuts = [-1.2816, -0.8416, -0.5244, -0.2533, 0, 0.2533, 0.5244, 0.8416, 1.2816];
+      function phi(z) { var t = 1 / (1 + 0.2316419 * Math.abs(z)), d = 0.3989423 * Math.exp(-z * z / 2), p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274)))); return z > 0 ? 1 - p : p; }
+      function dens(x, m, s) { var z = (x - m) / s; return Math.exp(-z * z / 2) / (s * 2.5066); }
+      el.className = "panel";
+      el.innerHTML = "<h3>Try it: let the customers drift</h3><p>The outline shows the ages your model was trained on (average 40). The shaded shape is this week's live customers. Move the sliders to shift and widen the live ages, and watch the population stability index (PSI).</p>" +
+        '<svg class="plot" viewBox="0 0 320 160" role="img" aria-label="Training and live age distributions"></svg>' +
+        '<label class="slider-row"><span>Average age shift</span><input type="range" data-k="m" min="-15" max="15" step="1" value="0"><output></output></label>' +
+        '<label class="slider-row"><span>Spread</span><input type="range" data-k="s" min="0.6" max="1.8" step="0.05" value="1"><output></output></label>' +
+        '<div class="neuron-out" aria-live="polite"></div>';
+      var svg = el.querySelector("svg"), ins = el.querySelectorAll("input");
+      function update() {
+        var shift = +ins[0].value, sc = +ins[1].value, m = 40 + shift, s = 10 * sc;
+        ins[0].nextElementSibling.textContent = (shift > 0 ? "+" : "") + shift + " yrs";
+        ins[1].nextElementSibling.textContent = "x" + sc.toFixed(2);
+        var X = function (a) { return 10 + (a - 0) * 300 / 90; }, Y = function (d) { return 140 - d * 2000; };
+        var tr = "", lv = "M" + X(0) + " 140";
+        for (var a = 0; a <= 90; a += 1) { tr += (a ? "L" : "M") + X(a).toFixed(1) + " " + Y(dens(a, 40, 10)).toFixed(1); lv += "L" + X(a).toFixed(1) + " " + Y(dens(a, m, s)).toFixed(1); }
+        lv += "L" + X(90) + " 140Z";
+        var ticks = [0, 20, 40, 60, 80].map(function (t) { return '<text x="' + (X(t) - 6) + '" y="155" font-size="10">' + t + "</text>"; }).join("");
+        svg.innerHTML = '<line class="axis" x1="10" y1="140" x2="310" y2="140"/>' + ticks +
+          '<path d="' + lv + '" fill="var(--gold)" fill-opacity=".45" stroke="none"/>' +
+          '<path d="' + tr + '" fill="none" stroke="var(--heading)" stroke-width="2" stroke-dasharray="5 3"/>';
+        var psi = 0, prev = 0;
+        for (var i = 0; i <= cuts.length; i++) {
+          var edge = i < cuts.length ? 40 + 10 * cuts[i] : Infinity, c = edge === Infinity ? 1 : phi((edge - m) / s);
+          var live = Math.max(c - prev, 1e-4); prev = c;
+          psi += (live - 0.1) * Math.log(live / 0.1);
+        }
+        var verdict = psi < 0.1 ? "<strong>Stable.</strong> Small differences like this are normal week to week." : psi < 0.25 ? "<strong>Worth a look.</strong> Check whether performance has moved and what caused the shift." : "<strong>Act.</strong> The model is now working on customers unlike the ones it learned from. Investigate, check accuracy and consider retraining.";
+        el.querySelector(".neuron-out").innerHTML = "Live average age " + m + ". PSI = <strong>" + psi.toFixed(3) + "</strong>. " + verdict;
+      }
+      ins.forEach(function (i) { i.addEventListener("input", update); }); update();
     }
   };
 
