@@ -1,4 +1,4 @@
-/* Level 4 course content: Deep learning and LLMs.
+/* Level 5 course content: Deep learning and LLMs.
    Same shape as earlier levels. All lesson text and code is original writing; sources are credited for
    fact-checking and further reading. Code boxes run real Python with NumPy in the page (PyTorch can't run in a
    browser, so PyTorch code is shown for reading and for running in Google Colab).
@@ -19,10 +19,10 @@ window.LEVEL4 = [
     summary: "Layers, weights and activation functions: what a network computes, written as matrices you already know.",
     minutes: 13,
     body: `
-<p>Welcome to Level 4. In Level 1 you met the artificial neuron; in Level 2 you learned matrices and gradients; in Level 3 you trained classic models. Now we open up the technology behind modern AI: <strong>deep neural networks</strong>. By the end of this level you'll understand, step by step, how a large language model is built.</p>
+<p>Welcome to Level 5. In Level 1 you met the artificial neuron; in Level 3 you learned matrices and gradients; in Level 4 you trained classic models. Now we open up the technology behind modern AI: <strong>deep neural networks</strong>. By the end of this level you'll understand, step by step, how a large language model is built.</p>
 
 <h2>From one neuron to a layer</h2>
-<p>A single neuron takes inputs, multiplies each by a weight, adds them up with a bias, and passes the result through an <strong>activation function</strong>. A <strong>layer</strong> is many neurons looking at the same inputs, each with its own weights. As you saw in Level 2, a whole layer is one matrix multiplication:</p>
+<p>A single neuron takes inputs, multiplies each by a weight, adds them up with a bias, and passes the result through an <strong>activation function</strong>. A <strong>layer</strong> is many neurons looking at the same inputs, each with its own weights. As you saw in Level 3, a whole layer is one matrix multiplication:</p>
 <p style="text-align:center"><strong>output = activation(X @ W + b)</strong></p>
 <p>X holds a batch of examples (one per row), W holds every neuron's weights (one column per neuron) and b holds the biases. A network with 784 inputs and a first layer of 128 neurons has a 784 × 128 weight matrix: over 100,000 numbers to learn in that layer alone.</p>
 
@@ -115,7 +115,7 @@ print("Parameters in this tiny network:", n_params)
 <p>A network might have billions of weights. Training needs to know, for every single one, which way to nudge it to reduce the loss. <strong>Backpropagation</strong> computes all those answers in one efficient sweep, and an <strong>optimiser</strong> uses them to update the weights. Together they are the engine of deep learning.</p>
 
 <h2>The computational graph</h2>
-<p>Think of the network and its loss as a chain of simple operations: multiply, add, ReLU, softmax, log. Each one is easy to differentiate on its own. The <strong>chain rule</strong> from Level 2 says the derivative of the whole chain is the product of the links' derivatives. Backpropagation applies it cleverly:</p>
+<p>Think of the network and its loss as a chain of simple operations: multiply, add, ReLU, softmax, log. Each one is easy to differentiate on its own. The <strong>chain rule</strong> from Level 3 says the derivative of the whole chain is the product of the links' derivatives. Backpropagation applies it cleverly:</p>
 <ol>
   <li><strong>Forward pass:</strong> compute the outputs and the loss, remembering the intermediate values.</li>
   <li><strong>Backward pass:</strong> start from the loss and move backwards through the operations, multiplying local derivatives, to get the gradient of the loss with respect to every weight.</li>
@@ -225,16 +225,16 @@ print("\\nPredictions for 00, 01, 10, 11:", p.ravel().round(3))
 <h2>Regularising deep networks</h2>
 <ul>
   <li><strong>Dropout</strong> (2014) randomly switches off a share of neurons on each training step, so the network can't rely on any single one. At test time, all neurons are used.</li>
-  <li><strong>Weight decay</strong> gently shrinks weights each step: L2 regularisation from Level 3.</li>
+  <li><strong>Weight decay</strong> gently shrinks weights each step: L2 regularisation from Level 4.</li>
   <li><strong>Data augmentation</strong> creates new training examples by flipping, cropping or recolouring images, or paraphrasing text.</li>
-  <li><strong>Early stopping</strong>, as in Level 3.</li>
+  <li><strong>Early stopping</strong>, as in Level 4.</li>
 </ul>
 
 <h2>A surprise: double descent</h2>
-<p>Level 3 taught that ever-bigger models eventually overfit. Very large networks complicate that picture. As model size grows, test error can fall, rise near the point where the model can just memorise the training data, and then fall <em>again</em> as size keeps growing. This <strong>double descent</strong> helps explain why enormous networks, with far more parameters than training examples, can still generalise well. It's an active research area, and a reminder that deep learning theory is still catching up with practice.</p>
+<p>Level 4 taught that ever-bigger models eventually overfit. Very large networks complicate that picture. As model size grows, test error can fall, rise near the point where the model can just memorise the training data, and then fall <em>again</em> as size keeps growing. This <strong>double descent</strong> helps explain why enormous networks, with far more parameters than training examples, can still generalise well. It's an active research area, and a reminder that deep learning theory is still catching up with practice.</p>
 
 <h2>The hardware story</h2>
-<p>Neural networks are mostly matrix multiplications, and <strong>GPUs</strong> (graphics chips) do thousands of those in parallel. The 2012 breakthrough AlexNet was trained on two consumer gaming GPUs. Today's large models train on thousands of specialised accelerators (GPUs and chips such as Google's TPUs) for weeks or months. Tricks such as <strong>mixed precision</strong> (doing most maths in 16-bit or even 8-bit numbers instead of 32-bit) roughly halve memory use and speed things up, the decimal-precision trade-off you met in Level 2.</p>
+<p>Neural networks are mostly matrix multiplications, and <strong>GPUs</strong> (graphics chips) do thousands of those in parallel. The 2012 breakthrough AlexNet was trained on two consumer gaming GPUs. Today's large models train on thousands of specialised accelerators (GPUs and chips such as Google's TPUs) for weeks or months. Tricks such as <strong>mixed precision</strong> (doing most maths in 16-bit or even 8-bit numbers instead of 32-bit) roughly halve memory use and speed things up, the decimal-precision trade-off you met in Level 3.</p>
 
 <div data-widget="py" data-title="Try it: watch gradients vanish"><textarea>
 import numpy as np
@@ -504,8 +504,8 @@ print(f"Dense layer with 64 neurons: {dense_params:,} parameters")
 <h2>Where vision models go wrong</h2>
 <ul>
   <li><strong>Shortcuts.</strong> A model can learn the background instead of the object. One famous study found pneumonia detectors that partly recognised which hospital an X-ray came from.</li>
-  <li><strong>Adversarial examples.</strong> Tiny changes to pixels, invisible to people, can flip a network's answer (Szegedy and colleagues, 2013). You'll meet this again in Level 5 on security.</li>
-  <li><strong>Unequal performance.</strong> The Gender Shades study (Buolamwini and Gebru, 2018) found commercial face analysis made far more errors for darker-skinned women than for lighter-skinned men. Testing across groups, as in Level 3, matters.</li>
+  <li><strong>Adversarial examples.</strong> Tiny changes to pixels, invisible to people, can flip a network's answer (Szegedy and colleagues, 2013). You'll meet this again in Level 6 on security.</li>
+  <li><strong>Unequal performance.</strong> The Gender Shades study (Buolamwini and Gebru, 2018) found commercial face analysis made far more errors for darker-skinned women than for lighter-skinned men. Testing across groups, as in Level 4, matters.</li>
 </ul>
 
 <div class="callout"><b>Takeaway:</b> CNNs slide small learned filters over an image, sharing weights so patterns are found anywhere with few parameters. Stacked with pooling, they build edges into parts into objects. AlexNet in 2012 started the deep learning era, ResNet's skip connections made very deep networks trainable, and transfer learning lets you reuse a pre-trained network with little data.</div>
@@ -708,7 +708,7 @@ print(table[token_ids])
   <li>a <strong>key</strong>: what do I contain, for others searching?</li>
   <li>a <strong>value</strong>: what will I hand over if chosen?</li>
 </ul>
-<p>Each token's query is compared with every key using a dot product (from Level 2). High scores mean a good match. The scores are divided by the square root of the vector size, to stop them growing too large, then softmax turns them into weights that sum to 1. Finally, each token's new vector is the weighted average of everyone's values. In one line:</p>
+<p>Each token's query is compared with every key using a dot product (from Level 3). High scores mean a good match. The scores are divided by the square root of the vector size, to stop them growing too large, then softmax turns them into weights that sum to 1. Finally, each token's new vector is the weighted average of everyone's values. In one line:</p>
 <p style="text-align:center"><strong>Attention(Q, K, V) = softmax(Q K<sup>T</sup> / √d) V</strong></p>
 <p>So the vector for "it" can soak up information from "trophy". Nothing about this is hand-written: the three matrices are learned so that useful connections score highly.</p>
 
@@ -919,7 +919,7 @@ print("Weights in this block:", params, "= 12 x d squared =", 12 * d * d)
 <p>Every large language model starts life the same way: it reads an enormous amount of text and, over and over, tries to guess the next token. This stage is called <strong>pre-training</strong>, and the result is a <strong>base model</strong>. It's the most expensive stage by far, and it's where the model picks up grammar, facts, reasoning patterns and coding skill. Let's see how, Abbas.</p>
 
 <h2>One simple objective</h2>
-<p>Take a piece of text. At every position, the model outputs probabilities for the next token. The loss is the <strong>cross-entropy</strong> from Level 3: how surprised the model was by the token that really came next (minus the log of the probability it gave it). Average that over trillions of tokens and adjust the weights by gradient descent. That's it. No labels are needed, because the text itself supplies the answers; this is called <strong>self-supervised learning</strong>.</p>
+<p>Take a piece of text. At every position, the model outputs probabilities for the next token. The loss is the <strong>cross-entropy</strong> from Level 4: how surprised the model was by the token that really came next (minus the log of the probability it gave it). Average that over trillions of tokens and adjust the weights by gradient descent. That's it. No labels are needed, because the text itself supplies the answers; this is called <strong>self-supervised learning</strong>.</p>
 <p>Why does such a simple task produce such capable models? Because predicting the next word well, across all kinds of text, requires knowing a lot. To finish "The capital of Kenya is", you need geography. To finish a proof, you need maths. To finish a line of Python, you need to understand the program. The model learns whatever helps it predict.</p>
 
 <div data-widget="py" data-title="Try it: pre-train a (very) small language model"><textarea>
@@ -961,7 +961,7 @@ for C in [1e21, 5.9e23, 1e25]:
 
 <h2>The data</h2>
 <p>Pre-training data is mostly web pages (often from the non-profit <strong>Common Crawl</strong> archive), plus books, encyclopedias, scientific papers, code and forums. Raw web text is messy, so most of the craft is in the cleaning: removing duplicates, spam, boilerplate and toxic material, filtering for quality (often with a smaller model as the judge), and choosing the mix. Open projects such as Hugging Face's <strong>FineWeb</strong> have shown that careful filtering matters as much as sheer size.</p>
-<p>This raises real questions: whose writing is used, and on what terms? Training on copyrighted work is being tested in courts in several countries, and the EU AI Act now requires providers of general-purpose models to publish a summary of their training content. Personal data in scraped text is a privacy issue under laws like GDPR (Level 2).</p>
+<p>This raises real questions: whose writing is used, and on what terms? Training on copyrighted work is being tested in courts in several countries, and the EU AI Act now requires providers of general-purpose models to publish a summary of their training content. Personal data in scraped text is a privacy issue under laws like GDPR (Level 3).</p>
 
 <h2>Scaling laws</h2>
 <p>In 2020, Jared Kaplan and colleagues at OpenAI found something remarkable: the loss falls smoothly and predictably as you increase three things together, <strong>parameters</strong> (N), <strong>training tokens</strong> (D) and <strong>compute</strong>. Plotted on log scales, the improvements form straight lines, called <strong>power laws</strong>. That made progress something you could plan and budget for. The training compute is approximately <strong>6 × N × D</strong> floating-point operations.</p>
@@ -1084,7 +1084,7 @@ print(f"Reward for the same answer, padded and flattering: {padded @ w:.2f}")
 </ul>
 
 <h2>Safety training and its limits</h2>
-<p>Post-training also teaches models to refuse clearly harmful requests and to be honest about uncertainty. It's not a wall: <strong>jailbreaks</strong> (cleverly worded prompts) can sometimes get around it, and too much caution makes a model refuse harmless requests. Getting the balance right is an active area of work, and you'll test it yourself in Level 5's lesson on red teaming.</p>
+<p>Post-training also teaches models to refuse clearly harmful requests and to be honest about uncertainty. It's not a wall: <strong>jailbreaks</strong> (cleverly worded prompts) can sometimes get around it, and too much caution makes a model refuse harmless requests. Getting the balance right is an active area of work, and you'll test it yourself in Level 6's lesson on red teaming.</p>
 
 <div class="callout"><b>Takeaway:</b> Post-training turns a base model into an assistant. Supervised fine-tuning teaches the format from examples; RLHF trains a reward model on human comparisons and optimises against it; DPO does this more directly; Constitutional AI uses written principles and AI feedback. Rewards learned from people carry their biases, leading to sycophancy, verbosity and reward hacking.</div>
 `,
@@ -1179,7 +1179,7 @@ print("Greedy (always the top word):", words[int(np.argmax(logits))])
 draws = rng.choice(words, size=20, p=probabilities(logits, 1.0))
 print("20 samples at temperature 1:", " ".join(draws))
 </textarea></div>
-<p>At temperature 0.2, "tea" takes 73% and "ink" is impossible in practice; at 2.0, "ink" gets 2%. Top-p 0.9 keeps tea, coffee and milk and throws away the rest. When you use an AI API in Level 5, these are settings you can choose.</p>
+<p>At temperature 0.2, "tea" takes 73% and "ink" is impossible in practice; at 2.0, "ink" gets 2%. Top-p 0.9 keeps tea, coffee and milk and throws away the rest. When you use an AI API in Level 6, these are settings you can choose.</p>
 
 <h2>The context window and the KV cache</h2>
 <p>Everything the model "knows" about your conversation is the text in its context window: the system instructions, the chat so far, any documents, and its own answer as it writes. It has no other memory between turns; chat apps resend the conversation each time (some add a separate memory feature on top). When the conversation is longer than the window, older parts must be dropped or summarised.</p>
@@ -1233,7 +1233,7 @@ print("20 samples at temperature 1:", " ".join(draws))
     summary: "Benchmarks and their limits, contamination, human and AI judges, uncertainty in scores, and why models hallucinate.",
     minutes: 14,
     body: `
-<p>Every new model arrives with a table of scores claiming it's the best. How much should you believe them, Abbas? This lesson gives you the tools to read those claims critically, using the evaluation thinking from Level 3.</p>
+<p>Every new model arrives with a table of scores claiming it's the best. How much should you believe them, Abbas? This lesson gives you the tools to read those claims critically, using the evaluation thinking from Level 4.</p>
 
 <h2>Benchmarks: shared exams for models</h2>
 <div class="table-scroll"><table>
@@ -1247,7 +1247,7 @@ print("20 samples at temperature 1:", " ".join(draws))
 
 <h2>Why scores can mislead</h2>
 <ul>
-  <li><strong>Contamination.</strong> Benchmark questions leak onto the web and into training data. A model may have memorised answers, like a student who has seen the exam. This is Level 3's data leakage at internet scale. Good evaluators use fresh or private questions.</li>
+  <li><strong>Contamination.</strong> Benchmark questions leak onto the web and into training data. A model may have memorised answers, like a student who has seen the exam. This is Level 4's data leakage at internet scale. Good evaluators use fresh or private questions.</li>
   <li><strong>Teaching to the test.</strong> When a score becomes a target, labs optimise for it, and it stops measuring general ability (Goodhart's law, Level 1).</li>
   <li><strong>Settings matter.</strong> The prompt wording, number of examples, whether reasoning is allowed and how answers are marked can shift scores by several points. Compare only like with like.</li>
   <li><strong>Noise.</strong> A benchmark is a sample of questions. Small differences are often chance.</li>
@@ -1286,7 +1286,7 @@ for n_q in [200, 1000, 5000]:
   <li><strong>Human preference arenas.</strong> LMArena (formerly Chatbot Arena) shows people two anonymous models' answers to their own prompt and asks which is better; millions of votes are turned into a ranking with the same kind of comparison model you trained two lessons ago. It reflects real use, but it rewards style and length too, and a 2025 study argued that companies testing many private variants can tilt the leaderboard.</li>
   <li><strong>LLM-as-a-judge.</strong> A strong model grades answers against a rubric. It's fast and cheap, and often agrees with people as often as people agree with each other, but judges favour longer answers, the first answer shown, and sometimes their own style. Check a sample by hand.</li>
 </ul>
-<p>For your own projects, the best evaluation is a set of examples from your real task, with clear pass criteria. You'll build one in Level 5.</p>
+<p>For your own projects, the best evaluation is a set of examples from your real task, with clear pass criteria. You'll build one in Level 6.</p>
 
 <h2>Hallucination</h2>
 <p>A <strong>hallucination</strong> is a fluent, confident answer that is false: an invented citation, a wrong date, a function that doesn't exist. Why does it happen? A 2025 paper by Adam Kalai and colleagues at OpenAI gave a clear explanation. Pre-training rewards producing plausible text, and facts that appear rarely in the data (like an obscure person's birthday) can't be learned reliably. Then most benchmarks mark answers right or wrong, giving zero for "I don't know", so a model that guesses scores higher than one that admits uncertainty, just as guessing helps on a multiple-choice exam with no penalty for errors. Their proposed fix includes changing how evaluations score abstentions.</p>
@@ -1312,7 +1312,7 @@ for n_q in [200, 1000, 5000]:
       { q: "Why do benchmarks keep being replaced?", options: ["Fashion", "Top models saturate them, and they leak into training data", "They're too cheap", "Rules require it"], answer: 1, explain: "Hence GPQA, Humanity's Last Exam and others." },
       { q: "What's a known bias of LLM judges?", options: ["They prefer shorter answers", "They tend to favour longer answers and answers shown first", "They can't read", "None"], answer: 1, explain: "Check a sample by hand." },
       { q: "According to Kalai and colleagues (2025), why do models hallucinate partly?", options: ["They are designed to lie", "Training and right-or-wrong scoring reward confident guessing over saying 'I don't know'", "GPUs make errors", "Too much data"], answer: 1, explain: "Like guessing on a test with no penalty." },
-      { q: "What's the best evaluation for your own AI project?", options: ["The highest public leaderboard", "A set of examples from your real task with clear pass criteria", "Asking the model if it's good", "No evaluation"], answer: 1, explain: "You'll build one in Level 5." }
+      { q: "What's the best evaluation for your own AI project?", options: ["The highest public leaderboard", "A set of examples from your real task with clear pass criteria", "Asking the model if it's good", "No evaluation"], answer: 1, explain: "You'll build one in Level 6." }
     ],
     sources: [
       ["Hendrycks et al. (2020), Measuring massive multitask language understanding", "https://arxiv.org/abs/2009.03300", "The MMLU paper."],
@@ -1351,7 +1351,7 @@ for n_q in [200, 1000, 5000]:
 <p>Updating every weight of a large model needs memory for the weights, their gradients and the optimiser's running averages (Adam keeps two numbers per weight), often over 16 bytes per parameter. For a 7-billion-parameter model that is over 100 GB of GPU memory, and you end up with a full new copy of the model for every task. It can also cause <strong>catastrophic forgetting</strong>, where the model gets worse at things it used to do well.</p>
 
 <h2>LoRA: train a small add-on</h2>
-<p><strong>Low-rank adaptation</strong> (LoRA, Edward Hu and colleagues at Microsoft, 2021) freezes the original weights and learns only a small correction. For a weight matrix W, the update is written as two thin matrices multiplied together, B × A, with a small inner size called the <strong>rank</strong> (often 8 or 16). The idea, from Level 2's matrices, is that the change needed for a new task is simple and can be described with far fewer numbers. On GPT-3, LoRA cut the trainable parameters by about 10,000 times with similar quality. The add-ons are a few megabytes, so you can keep one per task and swap them in.</p>
+<p><strong>Low-rank adaptation</strong> (LoRA, Edward Hu and colleagues at Microsoft, 2021) freezes the original weights and learns only a small correction. For a weight matrix W, the update is written as two thin matrices multiplied together, B × A, with a small inner size called the <strong>rank</strong> (often 8 or 16). The idea, from Level 3's matrices, is that the change needed for a new task is simple and can be described with far fewer numbers. On GPT-3, LoRA cut the trainable parameters by about 10,000 times with similar quality. The add-ons are a few megabytes, so you can keep one per task and swap them in.</p>
 <p><strong>QLoRA</strong> (Tim Dettmers and colleagues, 2023) went further: store the frozen model in 4-bit numbers and train LoRA add-ons on top. It made fine-tuning a 65-billion-parameter model possible on a single 48 GB GPU.</p>
 
 <h2>Quantisation: fewer bits per weight</h2>
@@ -1395,7 +1395,7 @@ for name, bytes_per in [("32-bit", 4), ("16-bit", 2), ("8-bit", 1), ("4-bit", 0.
 <h2>Doing it well</h2>
 <ul>
   <li><strong>Data quality beats quantity.</strong> A few hundred to a few thousand excellent, varied, correctly formatted examples often beat tens of thousands of messy ones.</li>
-  <li><strong>Hold out a test set</strong> from the start (Level 3), and compare against the base model with a good prompt. If fine-tuning doesn't beat that, don't ship it.</li>
+  <li><strong>Hold out a test set</strong> from the start (Level 4), and compare against the base model with a good prompt. If fine-tuning doesn't beat that, don't ship it.</li>
   <li><strong>Watch safety.</strong> Researchers showed in 2023 that fine-tuning on just ten harmful examples could undo a model's safety training, and that even harmless fine-tuning weakened it somewhat. Re-test safety after fine-tuning.</li>
   <li><strong>Check privacy.</strong> Models can memorise and repeat training examples, so remove personal data you don't need.</li>
 </ul>
@@ -1453,7 +1453,7 @@ for name, bytes_per in [("32-bit", 4), ("16-bit", 2), ("8-bit", 1), ("4-bit", 0.
   <li><strong>Forward (fixed, no learning):</strong> take a real image and add a little random noise, many times over, until after hundreds of steps it's pure static.</li>
   <li><strong>Reverse (learned):</strong> train a network to look at a noisy image, told how noisy it is, and predict the noise that was added. Subtract a bit of that noise and repeat.</li>
 </ol>
-<p>Training is simple and stable: take an image, add a random amount of noise, ask the network to predict that noise, and penalise the squared error (Level 3's mean squared error). To generate, start from random static and run the denoiser many times.</p>
+<p>Training is simple and stable: take an image, add a random amount of noise, ask the network to predict that noise, and penalise the squared error (Level 4's mean squared error). To generate, start from random static and run the denoiser many times.</p>
 
 <div data-widget="noise"></div>
 
@@ -1629,7 +1629,7 @@ print("New photo looks most like:", captions[int(np.argmax(scores))])
   <li><strong>Reading charts and documents</strong> is a major strength, but small text, dense tables and handwriting still cause misreadings. Check numbers.</li>
   <li><strong>Counting and spatial reasoning</strong> ("how many people are on the left?") are noticeably weaker than description.</li>
   <li><strong>Hallucinated details.</strong> Models can confidently describe objects that aren't in the picture.</li>
-  <li><strong>Prompt injection through images.</strong> Text hidden in an image ("ignore your instructions and...") can be read and obeyed. More on this in the next lesson and in Level 5.</li>
+  <li><strong>Prompt injection through images.</strong> Text hidden in an image ("ignore your instructions and...") can be read and obeyed. More on this in the next lesson and in Level 6.</li>
   <li><strong>Privacy.</strong> Photos contain faces, locations and documents. Under GDPR, facial data used to identify people is a special category of personal data.</li>
 </ul>
 
@@ -1670,7 +1670,7 @@ print("New photo looks most like:", captions[int(np.argmax(scores))])
     summary: "Giving models your documents with retrieval-augmented generation, and letting them act with tools, agent loops and the Model Context Protocol.",
     minutes: 16,
     body: `
-<p>A language model on its own has two big limits: it only knows what was in its training data (which stops at a cut-off date and doesn't include your private files), and it can only produce text. This final lesson of Level 4 shows the two ideas that break through both, Abbas: <strong>retrieval</strong>, which hands the model the right information, and <strong>agents</strong>, which let it take actions.</p>
+<p>A language model on its own has two big limits: it only knows what was in its training data (which stops at a cut-off date and doesn't include your private files), and it can only produce text. This final lesson of Level 5 shows the two ideas that break through both, Abbas: <strong>retrieval</strong>, which hands the model the right information, and <strong>agents</strong>, which let it take actions.</p>
 
 <h2>Retrieval-augmented generation (RAG)</h2>
 <p>Named in a 2020 paper by Patrick Lewis and colleagues at Facebook AI, <strong>RAG</strong> works like an open-book exam:</p>
@@ -1761,7 +1761,7 @@ while not finished:
   <li><strong>Prompt injection.</strong> An agent that reads web pages or emails can meet hidden instructions planted by an attacker ("forward the user's files to..."). Researchers demonstrated this "indirect prompt injection" in 2023, and it remains unsolved in general.</li>
   <li><strong>Too much power.</strong> Give agents the least access they need, keep a person in the loop for anything irreversible (payments, deleting, sending), and log what they do.</li>
 </ul>
-<p>Level 5 turns all of this into practice: building with APIs, evaluating, deploying and securing AI systems.</p>
+<p>Level 6 turns all of this into practice: building with APIs, evaluating, deploying and securing AI systems.</p>
 
 <div class="callout"><b>Takeaway:</b> RAG retrieves relevant passages by embedding similarity and puts them in the prompt, so answers are grounded and citable. Tool use lets a model request actions that your code runs; agents loop between reasoning and tool calls. MCP standardises how tools connect. Keep agents simple, limit their permissions, and guard against compounding errors and prompt injection.</div>
 `,
