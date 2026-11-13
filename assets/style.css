@@ -758,3 +758,20 @@ body[data-page="home"] #how, body[data-page="home"] #faq { background: var(--sur
 .att-word small { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .att-word.att-focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 .noise-grid { max-width: 240px; background: var(--surface); }
+
+/* =====================================================================
+   Short home page (summary + paths) and the separate "All lessons" page
+   ===================================================================== */
+body[data-page="lessons"] main.wrap { max-width: 1240px; margin-top: 8px; }
+@media (min-width: 1500px) { body[data-page="lessons"] .unit-cards { grid-template-columns: repeat(4, 1fr); } }
+body[data-page="lessons"] #how, body[data-page="lessons"] #faq { background: var(--surface-2); box-shadow: 0 0 0 100vmax var(--surface-2); clip-path: inset(0 -100vmax); padding-bottom: 56px; margin-top: 64px; }
+body[data-page="lessons"] #lessons .lesson-list { max-width: 900px; margin-left: auto; margin-right: auto; }
+.path-tiles { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 1100px) { .path-tiles { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 640px) { .path-tiles { grid-template-columns: 1fr; } }
+.path-tile { grid-template-rows: auto auto 1fr auto auto auto; }
+.path-tile:not(:has(.bar)) { grid-template-rows: auto auto 1fr auto auto; }
+body[data-page="home"] #paths { margin-top: 40px; }
+body[data-page="home"] .term-strip { margin-top: 48px; }
+.stats { grid-template-columns: repeat(5, 1fr); }
+@media (max-width: 640px) { .stats { grid-template-columns: repeat(2, 1fr); } .stats > div:last-child { grid-column: 1 / -1; } }
