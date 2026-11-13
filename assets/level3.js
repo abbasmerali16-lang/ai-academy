@@ -1491,7 +1491,7 @@ test["abs_error"] = test["error"].abs()
 test["kind"] = np.select([test["holiday"] == 1, test["rain"] == 1, test["weekday"] >= 5], ["holiday", "rainy", "weekend"], "dry weekday")
 print(test.groupby("kind")[["abs_error", "error"]].mean().round(1).rename(columns={"abs_error": "MAE", "error": "average error (+ = under-predicted)"}))
 print("\\nWorst five days:")
-print(test.nlargest(5, "abs_error")[["date", "temp", "rain", "holiday", "hires", "error"]].round(0).to_string(index=False))
+print(test.nlargest(5, "abs_error")[["date", "temp", "rain", "holiday", "hires", "error"]].round({"temp": 0, "error": 0}).to_string(index=False))
 </textarea></div>
 <p>Two findings jump out. First, the average error is positive in almost every group: the boosted model under-predicts across the board by around 75 bikes, which is the growth trend it can't extrapolate. Fixes include adding a time-trend feature, or predicting the <em>change</em> from last week instead of the raw number. Second, holidays have the biggest errors, in the other direction: the model over-predicts them, because holidays are rare in the training data. That's a typical finding: errors cluster in rare situations. Options include more holiday data, a dedicated feature (such as "day before a holiday"), or telling operations to apply judgement on holidays.</p>
 

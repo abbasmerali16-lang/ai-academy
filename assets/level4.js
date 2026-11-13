@@ -1528,7 +1528,7 @@ show(x)
 <ul>
   <li><strong>Content Credentials</strong> (the C2PA standard), backed by Adobe, Microsoft, Google, OpenAI, camera makers and others, attach signed information about how a file was made and edited. They can be stripped off, so their absence proves nothing.</li>
   <li><strong>Invisible watermarks</strong>, like Google DeepMind's SynthID, hide a signal in the pixels or audio that survives some editing.</li>
-  <li><strong>Law.</strong> The EU AI Act requires providers to mark AI-generated content in a machine-readable way and requires deployers to disclose deepfakes, with these transparency duties phasing in from August 2026 (an amendment adopted in 2026 moved the marking duty to December 2026).</li>
+  <li><strong>Law.</strong> The EU AI Act requires providers to mark AI-generated content in a machine-readable way and requires deployers to disclose deepfakes, with these transparency duties phasing in from August 2026 (an amendment adopted in 2026 gave tools already on sale before August 2026 until December 2026 to add the marking).</li>
   <li><strong>Detectors</strong> that guess whether an image is AI-made are unreliable, so don't treat their verdict as proof either way.</li>
 </ul>
 

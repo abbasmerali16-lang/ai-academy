@@ -1141,7 +1141,7 @@ print(f"Overall: {(df['result'] == 'COMPLIED').mean():.0%} of {len(df)} attacks 
   <li><strong>2 February 2025:</strong> bans on unacceptable-risk practices, and AI literacy duties.</li>
   <li><strong>2 August 2025:</strong> rules for general-purpose AI models.</li>
   <li><strong>2 August 2026:</strong> most transparency duties, such as telling people they're talking to a chatbot.</li>
-  <li><strong>2 December 2026:</strong> the duty to mark AI-generated content, and a new ban on AI systems that generate child sexual abuse material or non-consensual intimate images.</li>
+  <li><strong>2 December 2026:</strong> the duty to mark AI-generated content for tools already on sale before August 2026 (newer tools must comply from August 2026), and a new ban on AI systems that generate child sexual abuse material or non-consensual intimate images.</li>
   <li><strong>2 December 2027:</strong> rules for high-risk uses such as hiring and credit scoring (originally August 2026).</li>
   <li><strong>2 August 2028:</strong> rules for AI in regulated products such as medical devices (originally August 2027).</li>
 </ul>
