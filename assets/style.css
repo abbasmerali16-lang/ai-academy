@@ -901,3 +901,22 @@ html.dark .bar { background: var(--line-dark) !important; }
 
 /* Square corners everywhere (Abbas' design rule) */
 *, *::before, *::after { border-radius: 0 !important; }
+
+/* Layout review (13 Nov) */
+.page-band .band-actions { text-align: center !important; margin: 24px 0 0; }
+.streak-wrap { max-width: 1240px; margin: 0 auto; padding: 0 max(20px, env(safe-area-inset-right, 0px)) 0 max(20px, env(safe-area-inset-left, 0px)); box-sizing: border-box; }
+.streak-wrap .streak-strip { margin-top: 44px; }
+.cta-band p { color: #dbe4eb !important; }
+.gloss-levels { justify-content: flex-start; margin: 16px 0 4px; }
+.gloss-count { color: var(--muted); font-size: 15px; margin: 6px 0 0; }
+.gl-group { scroll-margin-top: 130px; }
+.gl-letter { font: 700 30px/1 Oswald, sans-serif; color: var(--accent-text); border-left: 0 !important; padding: 0 0 8px !important; margin: 32px 0 4px !important; border-bottom: 2px solid var(--gold); }
+.gl-group dd + dd { margin-top: 6px; }
+.letter-bar a.off { opacity: .35; pointer-events: none; }
+body[data-page="glossary"] main.wrap { max-width: 1240px; }
+.gl-group dl { display: grid; grid-template-columns: 1fr; gap: 0 40px; margin: 0; }
+@media (min-width: 900px) { .gl-group dl { grid-template-columns: 1fr 1fr; } }
+.gl-item { padding: 12px 0; border-bottom: 1px solid var(--border); }
+.gl-item dt { margin-top: 0; }
+.gloss dd { text-align: left !important; }
+body[data-page="glossary"] .term-strip, body[data-page="glossary"] .glossary-search { max-width: none; }
