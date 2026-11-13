@@ -4,11 +4,12 @@
   // Each level's lessons live in their own file (lessons.js for Level 1, level2.js, ...).
   // A level with no lessons loaded yet shows as "coming soon".
   var LEVELS = [
-    { n: 1, name: "Foundations", key: "LEVEL1", what: "what AI is, how it reasons and learns, and how to use it well and within the rules", lead: "Sixteen short lessons take you from \"what is AI?\" to using it well and knowing the rules. No maths or coding needed.", cert: "You've finished AI Foundations. You can explain what AI is, how it reasons and learns, how to judge whether it's any good, how chatbots and other AI tools work, and how to use AI responsibly and within the rules." },
-    { n: 2, name: "Data and Python", key: "LEVEL2", lead: "Sixteen lessons take you from your first line of Python to exploring a real dataset, with the statistics and gentle maths that AI is built on. You can run real code right in the page.", cert: "You've finished Data and Python. You can write and read Python, load, clean and summarise data with NumPy and pandas, describe it with statistics and charts, and explain the maths ideas that machine learning rests on." },
-    { n: 3, name: "Machine learning in practice", key: "LEVEL3", lead: "Sixteen lessons on building real machine learning models with scikit-learn: framing problems, the main model families, measuring and improving them, and making them fair and explainable.", cert: "You've finished Machine learning in practice. You can frame a problem, prepare data, train and compare models, tune and evaluate them honestly, and explain and check them for fairness." },
-    { n: 4, name: "Deep learning and LLMs", key: "LEVEL4", lead: "Sixteen lessons inside modern AI: how neural networks really train, attention and transformers, how large language models are built, and image generators, retrieval and agents.", cert: "You've finished Deep learning and LLMs. You can explain how neural networks train, how transformers and large language models work, and how image generators, retrieval and agents are built." },
-    { n: 5, name: "Mastery: build and deploy", key: "LEVEL5", lead: "Sixteen lessons on building, shipping and governing real AI systems: AI APIs, retrieval and agents, deployment and monitoring, security, governance and reading research.", cert: "You've completed the whole academy. You can design, build, evaluate, deploy, secure and govern AI systems, and keep learning from the research frontier." }
+    { n: 1, id: "1", name: "Foundations", key: "LEVEL1", what: "what AI is, how it reasons and learns, and how to use it well and within the rules", lead: "Sixteen short lessons take you from \"what is AI?\" to using it well and knowing the rules. No maths or coding needed.", cert: "You've finished AI Foundations. You can explain what AI is, how it reasons and learns, how to judge whether it's any good, how chatbots and other AI tools work, and how to use AI responsibly and within the rules." },
+    { n: 2, id: "tools", name: "AI tools in the real world", key: "LEVELT", lead: "Sixteen lessons on the AI tools people really use, from assistants, research and translation to images, voice, video, design, coding, app builders and automation, with a directory of over 100 tools.", cert: "You've finished AI tools in the real world. You know the main families of AI tools, how to choose and use them safely, and how AI is used for writing, research, languages, images, sound, video, design, coding, automation and across industries." },
+    { n: 3, id: "2", name: "Data and Python", key: "LEVEL2", lead: "Sixteen lessons take you from your first line of Python to exploring a real dataset, with the statistics and gentle maths that AI is built on. You can run real code right in the page.", cert: "You've finished Data and Python. You can write and read Python, load, clean and summarise data with NumPy and pandas, describe it with statistics and charts, and explain the maths ideas that machine learning rests on." },
+    { n: 4, id: "3", name: "Machine learning in practice", key: "LEVEL3", lead: "Sixteen lessons on building real machine learning models with scikit-learn: framing problems, the main model families, measuring and improving them, and making them fair and explainable.", cert: "You've finished Machine learning in practice. You can frame a problem, prepare data, train and compare models, tune and evaluate them honestly, and explain and check them for fairness." },
+    { n: 5, id: "4", name: "Deep learning and LLMs", key: "LEVEL4", lead: "Sixteen lessons inside modern AI: how neural networks really train, attention and transformers, how large language models are built, and image generators, retrieval and agents.", cert: "You've finished Deep learning and LLMs. You can explain how neural networks train, how transformers and large language models work, and how image generators, retrieval and agents are built." },
+    { n: 6, id: "5", name: "Mastery: build and deploy", key: "LEVEL5", lead: "Sixteen lessons on building, shipping and governing real AI systems: AI APIs, retrieval and agents, deployment and monitoring, security, governance and reading research.", cert: "You've completed the whole academy. You can design, build, evaluate, deploy, secure and govern AI systems, and keep learning from the research frontier." }
   ];
   LEVELS.forEach(function (m) {
     m.lessons = window[m.key] || [];
@@ -21,6 +22,7 @@
   var LV = READY[0], LESSONS = LV.lessons, UNITS = LV.units;
   function setLevel(m) { LV = m; LESSONS = m.lessons; UNITS = m.units; }
   function levelOf(l) { return LEVELS[l.level - 1]; }
+  var NUMWORD = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
   function lessonById(id) { return ALL.find(function (l) { return l.id === id; }); }
   function lessonTag(l) { return l.level > 1 ? l.level + "." + l.num : String(l.num); }
   // Addresses of pages (the Claude-hosted copy swaps these for in-page links).
@@ -109,7 +111,7 @@
     var title = "Level " + LV.n + " · " + esc(LV.name);
     var onList = page === "lessons";
     set("hero-eyebrow", onList ? title : "Welcome to your AI Journey");
-    set("hero-lead", onList ? "Abbas, here is everything in Level " + LV.n + " on one page: the units, every lesson, how lessons work and common questions." : "Abbas, this academy was built just for you. Five levels and " + ALL.length + " short lessons take you from \"what is AI?\" to building and running AI systems of your own. You start with no maths or coding and pick both up along the way.");
+    set("hero-lead", onList ? "Abbas, here is everything in Level " + LV.n + " on one page: the units, every lesson, how lessons work and common questions." : "Abbas, this academy was built just for you. " + NUMWORD[LEVELS.length].replace(/^./, function (c) { return c.toUpperCase(); }) + " levels and " + ALL.length + " short lessons take you from \"what is AI?\" to building and running AI systems of your own. You start with no maths or coding and pick both up along the way.");
     set("lp-title", "Your Level " + LV.n + " lessons");
     if (onList) document.title = "Level " + LV.n + " lessons · Abbas’ AI Academy";
     set("units-kicker", title);
@@ -119,7 +121,7 @@
     set("cert-big", "LEVEL " + LV.n);
     set("cert-title", "Well done, Abbas: Level " + LV.n + " complete");
     set("cert-text", esc(LV.cert) + (LEVELS[LV.n] && LEVELS[LV.n].ready ? ' <a href="' + levelHref(LV.n + 1) + '">On to Level ' + (LV.n + 1) + ": " + esc(LEVELS[LV.n].name) + " →</a>" : ""));
-    set("road-kicker", "All five levels");
+    set("road-kicker", "All " + NUMWORD[LEVELS.length] + " levels");
     set("levels", LEVELS.map(function (m) {
       var d = m.lessons.filter(function (l) { return isDone(l.id); }).length;
       var state = m === LV ? "current" : (m.ready ? "open" : "locked");
@@ -181,6 +183,7 @@
         tile(lessonsHref(LV.n), "Level " + LV.n + " · " + esc(LV.name), "All lessons", "Every lesson in this level on one page, grouped into its " + UNITS.length + " units.", n + " of " + LESSONS.length + " done", "See all lessons", pct) +
         tile("review.html", "Practise", "Review and tests", "Ten-question rounds on terms you’ve learned, plus a test at the end of each level.", "A certificate for each level", "Start reviewing") +
         tile("glossary.html", "Reference", "Glossary", "Every key term from every level in plain English, A to Z.", gloss + " key terms", "Open the glossary") +
+        tile(toolsHref(), "Real-world AI", "AI tools directory", "Over " + Math.floor(TOOLS.length / 10) * 10 + " AI tools, A to Z and by job, each with its own page.", TOOLS.length + " tools", "Browse the tools") +
         tile("me.html", "Your space", "My learning", "Your streak, daily goal, notes, certificates and save code.", "All in one place", "Open My learning");
     }
     initSearch();
@@ -210,13 +213,21 @@
         if (words.every(function (w) { return hay.indexOf(w) >= 0; })) terms.push({ t: t, x: x });
       }); });
       terms = terms.slice(0, 4);
+      var tools = TOOLS.map(function (t) {
+        var sc = 0, n = t.name.toLowerCase(), hay = (t.maker + " " + t.blurb + " " + catOf(t).name).toLowerCase();
+        words.forEach(function (w) { if (n.indexOf(w) >= 0) sc += 6; if (hay.indexOf(w) >= 0) sc += 2; });
+        return { t: t, sc: sc };
+      }).filter(function (r) { return r.sc > 0; }).sort(function (a, b) { return b.sc - a.sc; }).slice(0, 4);
       out.innerHTML = (lessons.length ? '<p class="sr-head">Lessons</p>' + lessons.map(function (r) {
           return '<a class="sr-item" href="' + lessonHref(r.x.l.id) + '"><span class="sr-n">' + r.x.n + "</span><span><strong>" + esc(r.x.l.title) + "</strong><small>" + esc(r.x.l.summary) + "</small></span></a>";
         }).join("") : "") +
         (terms.length ? '<p class="sr-head">Key terms</p>' + terms.map(function (r) {
           return '<a class="sr-item" href="' + lessonHref(r.x.l.id) + '"><span class="sr-n">' + r.x.n + "</span><span><strong>" + esc(r.t[0]) + "</strong><small>" + esc(r.t[1]) + "</small></span></a>";
         }).join("") : "") +
-        (!lessons.length && !terms.length ? '<p class="sr-none">Nothing found for "' + esc(text) + '", Abbas. Try a simpler word, like "data" or "chatbot".</p>' : "");
+        (tools.length ? '<p class="sr-head">AI tools</p>' + tools.map(function (r) {
+          return '<a class="sr-item" href="' + toolHref(r.t.id) + '"><span class="sr-n">Tool</span><span><strong>' + esc(r.t.name) + "</strong><small>" + esc(r.t.blurb) + "</small></span></a>";
+        }).join("") : "") +
+        (!lessons.length && !terms.length && !tools.length ? '<p class="sr-none">Nothing found for "' + esc(text) + '", Abbas. Try a simpler word, like "data" or "chatbot".</p>' : "");
       out.hidden = false;
     }
     q.addEventListener("input", function () { run(q.value); });
@@ -276,6 +287,7 @@
       "</nav>";
 
     $("#lesson").innerHTML = html;
+    linkTools($("#lesson"));
     mountWidgets($("#lesson"));
     renderQuiz(l);
     window.scrollTo(0, 0);
@@ -466,6 +478,75 @@
         });
         el.appendChild(row);
       });
+    },
+
+    /* ===== AI tools level activities ===== */
+    /* Pick a job and see which tools to try first. */
+    "tool-finder": function (el) {
+      el.className = "panel";
+      el.innerHTML = "<h3>Try it: which tool for the job?</h3><p>Pick a job you often do. You'll see good tools to try first; hover over a name for a summary, or click it to open its page.</p>" +
+        '<div class="chip-row">' + TOOL_JOBS.map(function (j, i) { return '<button class="chip" type="button" data-j="' + i + '">' + esc(j.job) + "</button>"; }).join("") + "</div>" +
+        '<div class="tf-out" aria-live="polite"><p class="rv-note"><em>Choose a job above.</em></p></div>';
+      var out = el.querySelector(".tf-out");
+      el.querySelectorAll("[data-j]").forEach(function (b) {
+        b.onclick = function () {
+          el.querySelectorAll("[data-j]").forEach(function (x) { x.classList.toggle("yes", x === b); });
+          var j = TOOL_JOBS[+b.dataset.j];
+          out.innerHTML = '<p class="tf-tip">' + esc(j.tip) + '</p><div class="td-grid">' + j.tools.map(toolById).filter(Boolean).map(toolItem).join("") + "</div>";
+        };
+      });
+    },
+
+    /* Build and save a personal toolkit: one tool per job. Saved in this browser. */
+    "toolkit": function (el) {
+      var KIT = "aiAcademy.toolkit.v1", kit = loadKey(KIT);
+      el.className = "panel";
+      function summary() {
+        var picked = TOOL_JOBS.filter(function (j) { return kit[j.id]; });
+        return picked.length ? '<p><strong>Your toolkit, Abbas (' + picked.length + " of " + TOOL_JOBS.length + " jobs):</strong></p><ul class=\"tk-list\">" + picked.map(function (j) {
+          var t = toolById(kit[j.id]); return t ? "<li>" + esc(j.job) + ": " + toolLink(t) + "</li>" : "";
+        }).join("") + "</ul>" : '<p class="rv-note"><em>Nothing picked yet. Choose a tool for any job you do.</em></p>';
+      }
+      el.innerHTML = "<h3>Try it: build your personal AI toolkit</h3><p>For each job, choose the tool you'll try first. Your choices are saved in this browser.</p>" +
+        '<div class="tk-grid">' + TOOL_JOBS.map(function (j) {
+          return '<label class="tk-row"><span>' + esc(j.job) + '</span><select data-k="' + j.id + '"><option value="">Not for me yet</option>' +
+            j.tools.map(toolById).filter(Boolean).map(function (t) { return '<option value="' + t.id + '"' + (kit[j.id] === t.id ? " selected" : "") + ">" + esc(t.name) + "</option>"; }).join("") + "</select></label>";
+        }).join("") + "</div>" + '<div class="tk-sum" aria-live="polite">' + summary() + "</div>";
+      el.querySelectorAll("select").forEach(function (s) {
+        s.onchange = function () { if (s.value) kit[s.dataset.k] = s.value; else delete kit[s.dataset.k]; saveKey(KIT, kit); el.querySelector(".tk-sum").innerHTML = summary(); };
+      });
+    },
+
+    /* Put an image prompt together from its parts. */
+    "image-prompt": function (el) {
+      var parts = [
+        ["Subject", ["a red fox reading a newspaper", "an old lighthouse", "a busy street food market", "a cup of coffee on a wooden table"]],
+        ["Setting", ["in a Paris café", "on a stormy cliff", "in Lagos at night", "by a rainy window"]],
+        ["Style", ["photograph", "watercolour painting", "1950s travel poster", "flat vector illustration"]],
+        ["Composition", ["close-up", "wide shot", "view from above", "centred, with space for a title"]],
+        ["Lighting and mood", ["golden hour, warm and calm", "soft studio light", "moody and dramatic", "bright and cheerful"]]
+      ];
+      var pick = [0, -1, -1, -1, -1];
+      el.className = "panel";
+      el.innerHTML = "<h3>Try it: build an image prompt</h3><p>Choose one option from each row (click again to remove it) and watch the prompt take shape. Then paste it into any image tool.</p>" +
+        parts.map(function (p, r) { return '<p class="ip-head">' + p[0] + '</p><div class="chip-row">' + p[1].map(function (o, i) { return '<button class="chip' + (pick[r] === i ? " yes" : "") + '" type="button" data-r="' + r + '" data-i="' + i + '">' + esc(o) + "</button>"; }).join("") + "</div>"; }).join("") +
+        '<div class="neuron-out prompt-out" aria-live="polite"></div>';
+      function update() {
+        var bits = pick.map(function (i, r) { return i < 0 ? null : parts[r][1][i]; });
+        var n = bits.filter(Boolean).length;
+        var text = [bits[2] ? bits[2] + " of " + (bits[0] || "something") : bits[0], bits[1], bits[3], bits[4]].filter(Boolean).join(", ");
+        el.querySelector(".prompt-out").innerHTML = (text ? "<em>" + esc(text.charAt(0).toUpperCase() + text.slice(1)) + "</em>" : "<em>(empty prompt)</em>") + "<br><br><strong>" +
+          (n <= 1 ? "Vague: the tool will choose style, setting and lighting for you." : n <= 3 ? "Better: you're steering the picture." : "Specific: you'll get much closer to what you imagined.") + "</strong>";
+      }
+      el.querySelectorAll("[data-r]").forEach(function (b) {
+        b.onclick = function () {
+          var r = +b.dataset.r, i = +b.dataset.i;
+          pick[r] = pick[r] === i ? -1 : i;
+          el.querySelectorAll('[data-r="' + r + '"]').forEach(function (x) { x.classList.toggle("yes", pick[r] === +x.dataset.i); });
+          update();
+        };
+      });
+      update();
     },
 
     /* Reusable sorting activity. Data lives in window.SORT_SETS (lessons.js). */
@@ -1243,11 +1324,193 @@
     draw();
   }
 
+  /* ---------- AI tools directory (tools.html) and one page per tool (tool.html?id=...) ---------- */
+  var TOOLS = window.AI_TOOLS || [], TOOL_CATS = window.TOOL_CATS || [];
+  function toolHref(id) { return "tool.html?id=" + id; }
+  function toolsHref(cat) { return cat ? "tools.html?cat=" + cat : "tools.html"; }
+  function toolById(id) { return TOOLS.find(function (t) { return t.id === id; }); }
+  function catOf(t) { return TOOL_CATS.find(function (c) { return c.id === t.cat; }) || { id: t.cat, name: t.cat, blurb: "" }; }
+  function currentToolId() { return new URLSearchParams(location.search).get("id"); }
+  function requestedCat() { return new URLSearchParams(location.search).get("cat") || ""; }
+  function toolLessonLabel(l) { return "Level " + l.level + ", lesson " + l.num + ": " + l.title; }
+  // A tool's name as a link: hover (or focus) shows a short preview, a click opens its page.
+  function toolLink(t, cls) { return '<a class="tool-link' + (cls ? " " + cls : "") + '" data-tool="' + t.id + '" href="' + toolHref(t.id) + '">' + esc(t.name) + "</a>"; }
+  function linkTools(root) {
+    (root || document).querySelectorAll("a[data-tool]").forEach(function (a) {
+      var t = toolById(a.dataset.tool);
+      if (!t) { a.removeAttribute("data-tool"); return; }
+      a.href = toolHref(t.id);
+      a.classList.add("tool-link");
+    });
+  }
+  // One floating preview card, shared by every tool link on the page.
+  var toolPop = null, popTimer = null, popFor = null;
+  function showToolPop(a) {
+    var t = toolById(a.dataset.tool);
+    if (!t) return;
+    if (!toolPop) {
+      toolPop = document.createElement("div");
+      toolPop.className = "tool-pop"; toolPop.setAttribute("role", "tooltip"); toolPop.id = "tool-pop";
+      toolPop.addEventListener("mouseenter", function () { clearTimeout(popTimer); });
+      toolPop.addEventListener("mouseleave", hideToolPopSoon);
+      document.body.appendChild(toolPop);
+    }
+    popFor = a;
+    toolPop.innerHTML = '<p class="tp-cat">' + esc(catOf(t).name) + '</p><p class="tp-name">' + esc(t.name) + '</p><p class="tp-meta">' + esc(t.maker) + " · " + esc(t.price) + "</p>" +
+      '<p class="tp-blurb">' + esc(t.blurb) + '</p><a class="tp-go" href="' + toolHref(t.id) + '">Open the full page →</a>';
+    a.setAttribute("aria-describedby", "tool-pop");
+    toolPop.hidden = false;
+    var r = a.getBoundingClientRect(), w = Math.min(340, window.innerWidth - 24);
+    toolPop.style.width = w + "px";
+    var left = Math.max(12, Math.min(window.innerWidth - w - 12, r.left)) + window.scrollX;
+    var h = toolPop.offsetHeight, below = r.bottom + 8;
+    var top = below + h > window.innerHeight && r.top - h - 8 > 0 ? r.top - h - 8 : below;
+    toolPop.style.left = left + "px";
+    toolPop.style.top = (top + window.scrollY) + "px";
+  }
+  function hideToolPopSoon() { clearTimeout(popTimer); popTimer = setTimeout(function () { if (toolPop) toolPop.hidden = true; if (popFor) popFor.removeAttribute("aria-describedby"); }, 160); }
+  var canHover = window.matchMedia && window.matchMedia("(hover: hover)").matches;
+  document.addEventListener("mouseover", function (e) {
+    var a = e.target.closest && e.target.closest("a[data-tool]");
+    if (!a || !canHover) return;
+    clearTimeout(popTimer);
+    popTimer = setTimeout(function () { showToolPop(a); }, 120);
+  });
+  document.addEventListener("mouseout", function (e) {
+    var a = e.target.closest && e.target.closest("a[data-tool]");
+    if (a && !(e.relatedTarget && a.contains(e.relatedTarget))) hideToolPopSoon();
+  });
+  document.addEventListener("focusin", function (e) { var a = e.target.closest && e.target.closest("a[data-tool]"); if (a) showToolPop(a); });
+  document.addEventListener("focusout", function (e) { if (e.target.closest && e.target.closest("a[data-tool]")) hideToolPopSoon(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && toolPop) toolPop.hidden = true; });
+  window.addEventListener("scroll", function () { if (toolPop && !toolPop.hidden && !toolPop.matches(":hover")) toolPop.hidden = true; }, { passive: true });
+
+  function toolItem(t) {
+    return '<div class="td-item">' + toolLink(t, "td-name") + '<span class="td-meta">' + esc(t.maker) + " · " + esc(t.price) + "</span><p>" + esc(t.blurb) + "</p></div>";
+  }
+  function renderTools() {
+    var box = $("#tools");
+    if (!box) return;
+    var cat = TOOL_CATS.some(function (c) { return c.id === requestedCat(); }) ? requestedCat() : "", view = "cat", text = "";
+    var sorted = TOOLS.slice().sort(function (a, b) { return a.name.localeCompare(b.name, "en", { sensitivity: "base" }); });
+    var letterOf = function (t) { var c = t.name.charAt(0).toUpperCase(); return /[A-Z]/.test(c) ? c : "#"; };
+    var count = $("#tool-count"), bar = $("#tool-letters");
+    function match(t) {
+      if (cat && t.cat !== cat) return false;
+      if (!text) return true;
+      var hay = (t.name + " " + t.maker + " " + t.blurb + " " + catOf(t).name + " " + t.uses.join(" ")).toLowerCase();
+      return text.toLowerCase().split(/\s+/).filter(Boolean).every(function (w) { return hay.indexOf(w) >= 0; });
+    }
+    function draw() {
+      var shown = 0, html = "";
+      if (view === "cat") {
+        TOOL_CATS.forEach(function (c) {
+          var ts = TOOLS.filter(function (t) { return t.cat === c.id && match(t); });
+          if (!ts.length) return;
+          shown += ts.length;
+          html += '<section class="td-cat" id="cat-' + c.id + '"><h2 class="gl-letter">' + esc(c.name) + '</h2><p class="td-blurb">' + esc(c.blurb) + '</p><div class="td-grid">' + ts.map(toolItem).join("") + "</div></section>";
+        });
+      } else {
+        var cur = null;
+        sorted.forEach(function (t) {
+          if (!match(t)) return;
+          var L = letterOf(t);
+          if (L !== cur) { if (cur !== null) html += "</div></section>"; cur = L; html += '<section class="gl-group td-cat" id="tl-' + (L === "#" ? "num" : L) + '"><h2 class="gl-letter">' + L + '</h2><div class="td-grid">'; }
+          shown++;
+          html += toolItem(t);
+        });
+        if (cur !== null) html += "</div></section>";
+      }
+      box.innerHTML = html || '<p class="rv-note"><em>No tools match that, Abbas. Try a shorter word, or pick "All".</em></p>';
+      if (count) count.textContent = shown + " tool" + (shown === 1 ? "" : "s") + (cat ? " in " + catOf({ cat: cat }).name : "");
+      if (bar) {
+        bar.hidden = view !== "az";
+        bar.querySelectorAll("a").forEach(function (a) { a.classList.toggle("off", !document.getElementById(a.getAttribute("href").slice(1))); });
+      }
+    }
+    if (bar) bar.innerHTML = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map(function (c) { return '<a href="#tl-' + c + '">' + c + "</a>"; }).join("");
+    var cats = $("#tool-cats");
+    if (cats) {
+      cats.innerHTML = '<span>Show:</span><button type="button" data-cat="">All</button>' + TOOL_CATS.map(function (c) { return '<button type="button" data-cat="' + c.id + '">' + esc(c.name) + "</button>"; }).join("");
+      var mark = function () { cats.querySelectorAll("button").forEach(function (b) { b.classList.toggle("on", b.dataset.cat === cat); }); };
+      cats.querySelectorAll("button").forEach(function (b) { b.onclick = function () { cat = b.dataset.cat; mark(); draw(); }; });
+      mark();
+    }
+    var vw = $("#tool-view");
+    if (vw) {
+      vw.innerHTML = '<span>View:</span><button type="button" data-v="cat" class="on">By category</button><button type="button" data-v="az">A to Z</button>';
+      vw.querySelectorAll("button").forEach(function (b) { b.onclick = function () { view = b.dataset.v; vw.querySelectorAll("button").forEach(function (x) { x.classList.toggle("on", x === b); }); draw(); }; });
+    }
+    var q = $("#tool-search");
+    if (q) q.addEventListener("input", function () { text = q.value.trim(); draw(); });
+    draw();
+  }
+
+  function renderTool() {
+    var art = $("#tool");
+    if (!art) return;
+    var t = toolById(currentToolId()) || TOOLS[0];
+    if (!t) return;
+    var c = catOf(t), lesson = lessonById(t.lesson);
+    document.title = t.name + " · AI tools · Abbas’ AI Academy";
+    var list = function (xs) { return "<ul>" + xs.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>"; };
+    var order = [];
+    TOOL_CATS.forEach(function (k) { TOOLS.forEach(function (x) { if (x.cat === k.id) order.push(x); }); });
+    var at = order.indexOf(t), prev = order[at - 1], nxt = order[at + 1];
+    var same = TOOLS.filter(function (x) { return x.cat === t.cat && x !== t; });
+    var alts = t.alts.map(toolById).filter(Boolean);
+    art.innerHTML =
+      '<p class="crumbs"><a href="' + toolsHref() + '">AI tools directory</a> › <a href="' + toolsHref(c.id) + '">' + esc(c.name) + "</a></p>" +
+      '<span class="eyebrow">' + esc(c.name) + "</span>" +
+      "<h1>" + esc(t.name) + "</h1>" +
+      '<p class="lead">' + esc(t.blurb) + "</p>" +
+      '<dl class="tool-facts">' +
+        "<div><dt>Made by</dt><dd>" + esc(t.maker) + "</dd></div>" +
+        "<div><dt>Price</dt><dd>" + esc(t.price) + "</dd></div>" +
+        '<div><dt>Category</dt><dd><a href="' + toolsHref(c.id) + '">' + esc(c.name) + "</a></dd></div>" +
+        '<div><dt>Website</dt><dd><a href="' + esc(t.url) + '" target="_blank" rel="noopener">' + esc(t.url.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")) + "</a></dd></div>" +
+      "</dl>" +
+      "<h2>What it is</h2><p>" + esc(t.what) + "</p>" +
+      "<h2>What you can use it for</h2>" + list(t.uses) +
+      "<h2>Strengths</h2>" + list(t.good) +
+      "<h2>Things to watch</h2>" + list(t.watch) +
+      "<h2>How to get started</h2><ol>" + t.start.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ol>" +
+      '<div class="callout"><b>Try this first, Abbas:</b> ' + esc(t.tryit) + "</div>" +
+      (alts.length ? '<h2>Alternatives to compare</h2><div class="td-grid td-alts">' + alts.map(toolItem).join("") + "</div>" : "") +
+      (lesson ? '<h2>Learn more in your course</h2><p>This tool features in <a href="' + lessonHref(lesson.id) + '">' + esc(toolLessonLabel(lesson)) + "</a>, alongside the other tools that do the same kind of job.</p>" : "") +
+      (same.length ? "<h2>More " + esc(c.name.toLowerCase()) + ' tools</h2><p class="td-more">' + same.map(function (x) { return toolLink(x); }).join(" · ") + "</p>" : "") +
+      '<p class="tool-note"><em>Prices and features change often. Check the official website for the latest details before you sign up or pay. Written in our own words, ' + "November 2026.</em></p>" +
+      '<nav class="pager">' +
+        (prev ? '<a class="btn secondary" href="' + toolHref(prev.id) + '">← ' + esc(prev.name) + "</a>" : '<a class="btn secondary" href="' + toolsHref() + '">← All tools</a>') +
+        (nxt ? '<a class="btn" href="' + toolHref(nxt.id) + '">Next: ' + esc(nxt.name) + " →</a>" : '<a class="btn" href="' + toolsHref() + '">Back to all tools →</a>') +
+      "</nav>";
+    window.scrollTo(0, 0);
+  }
+  // Everyday jobs and the tools worth trying first (used by the tool finder and toolkit activities).
+  var TOOL_JOBS = [
+    { id: "write", job: "Write and polish emails", tools: ["chatgpt", "claude", "gemini", "grammarly"], tip: "A general assistant drafts; Grammarly checks as you type everywhere." },
+    { id: "research", job: "Look things up with sources", tools: ["perplexity", "google-ai-mode", "chatgpt"], tip: "Use search-based answers for anything current, and click the sources." },
+    { id: "docs", job: "Understand long documents", tools: ["notebooklm", "claude", "chatgpt"], tip: "Upload the document so answers come from it, with citations." },
+    { id: "translate", job: "Translate", tools: ["deepl", "google-translate", "ms-translator"], tip: "DeepL for natural text, Google Translate for the most languages and camera translation." },
+    { id: "meetings", job: "Take meeting notes", tools: ["otter", "granola", "zoom-ai", "m365-copilot"], tip: "Always tell people you're recording." },
+    { id: "images", job: "Make or edit images", tools: ["nano-banana", "chatgpt", "midjourney", "firefly", "canva"], tip: "Conversational tools are easiest for edits; Midjourney for artistic looks." },
+    { id: "slides", job: "Make presentations and posters", tools: ["gamma", "canva", "m365-copilot"], tip: "Outline your message first, then generate." },
+    { id: "voice", job: "Voiceovers and audio clean-up", tools: ["elevenlabs", "adobe-podcast", "descript"], tip: "Only clone your own voice, or one you have permission to use." },
+    { id: "video", job: "Make or edit video", tools: ["capcut", "descript", "veo", "sora", "runway"], tip: "Editing tools save the most time; generators are for new footage." },
+    { id: "code", job: "Write or understand code", tools: ["github-copilot", "claude-code", "cursor", "google-colab"], tip: "Ask it to explain every line, and review before you use it." },
+    { id: "apps", job: "Build a small app", tools: ["replit", "lovable", "bolt", "v0"], tip: "Start with the smallest useful version." },
+    { id: "automate", job: "Automate routine tasks", tools: ["zapier", "make", "n8n"], tip: "Test with examples and keep a human approval step for anything risky." },
+    { id: "learn", job: "Learn and revise", tools: ["khanmigo", "notebooklm", "quizlet", "duolingo"], tip: "Pick tools that make you do the thinking." },
+    { id: "private", job: "Use AI privately offline", tools: ["ollama", "lm-studio"], tip: "Local models keep everything on your computer." }
+  ];
+
   var page = document.body.dataset.page;
-  if (page === "glossary" || page === "home" || page === "lessons" || page === "review" || page === "me") setLevel(pickLevel());
+  if (page === "glossary" || page === "home" || page === "lessons" || page === "review" || page === "me" || page === "tools" || page === "tool") setLevel(pickLevel());
   if (page === "home" || page === "lessons") renderHome();
   else if (page === "lesson") renderLesson();
   else if (page === "glossary") renderGlossary();
+  else if (page === "tools") renderTools();
+  else if (page === "tool") renderTool();
 
   /* ---------- side panels (wide screens only) ---------- */
   function allTerms() {
@@ -1277,6 +1540,7 @@
     var curId = page === "lesson" ? (currentLessonId() || ALL[0].id) : null;
     var html = '<nav class="nav-tab" aria-label="Course menu">' +
       '<a class="nav-top' + (page === "home" ? " here" : "") + '" href="' + levelHref(LV.n) + '">Home</a>' +
+      '<a class="nav-top' + (page === "tools" || page === "tool" ? " here" : "") + '" href="' + toolsHref() + '">AI tools</a>' +
       '<a class="nav-top' + (page === "glossary" ? " here" : "") + '" href="glossary.html">Glossary</a>' +
       '<a class="nav-top' + (page === "review" ? " here" : "") + '" href="review.html">Review</a>' +
       '<a class="nav-top' + (page === "me" ? " here" : "") + '" href="me.html">My learning</a>';
@@ -1322,6 +1586,7 @@
         '<div class="dd dd-levels"><ul class="dd-list">' + levels + "</ul></div></div>" +
       '<div class="tn-item tn-mega"><button class="tn-btn' + (page === "lesson" || page === "lessons" ? " active" : "") + '" type="button" aria-expanded="false">Lessons</button>' +
         '<div class="dd dd-mega"><div class="dd-top"><span>Level ' + LV.n + ": " + esc(LV.name) + '</span><a href="' + lessonsHref(LV.n) + '">See all on one page →</a></div><div class="dd-cols">' + units + "</div></div></div>" +
+      '<a class="tn-link' + (page === "tools" || page === "tool" ? " active" : "") + '" href="' + toolsHref() + '">AI tools</a>' +
       '<a class="tn-link' + (page === "glossary" ? " active" : "") + '" href="glossary.html">Glossary</a>' +
       '<a class="tn-link' + (page === "review" ? " active" : "") + '" href="review.html">Review</a>' +
       '<a class="tn-link' + (page === "me" ? " active" : "") + '" href="me.html">My learning</a>' +
@@ -1384,6 +1649,12 @@
         }, { rootMargin: "0px 0px -70% 0px" });
         heads.forEach(function (h) { obs.observe(h); });
       }
+    } else if (page === "tools") {
+      var th = document.querySelector("main .hero");
+      if (th) { pageBand([th.querySelector(".eyebrow"), th.querySelector("h1"), th.querySelector(".lead")]); th.remove(); }
+    } else if (page === "tool") {
+      var ta = document.getElementById("tool");
+      if (ta && ta.querySelector("h1")) pageBand([ta.querySelector(".crumbs"), ta.querySelector(".eyebrow"), ta.querySelector("h1"), ta.querySelector(".lead")]);
     } else if (page === "glossary") {
       var hero = document.querySelector("main .hero");
       if (hero) { pageBand([hero.querySelector(".eyebrow"), hero.querySelector("h1"), hero.querySelector(".lead")]); hero.remove(); }
@@ -1830,7 +2101,7 @@
     var bank = [];
     m.lessons.forEach(function (l) { l.quiz.forEach(function (q) { bank.push({ q: q, l: l }); }); });
     function intro() {
-      var t = extras.tests[m.n];
+      var t = extras.tests[m.id];
       document.title = "Level " + m.n + " test · Abbas’ AI Academy";
       main.innerHTML = '<section class="hero"><span class="eyebrow">Level ' + m.n + " · " + esc(m.name) + '</span><h1>Level ' + m.n + ' test</h1>' +
         '<p class="lead">Abbas, this test mixes ' + TEST_LEN + " questions from all " + m.lessons.length + " lessons in Level " + m.n + ". Get " + Math.ceil(TEST_LEN * TEST_PASS) + " or more right to earn your certificate. You can take it as many times as you like.</p></section>" +
@@ -1853,9 +2124,9 @@
         label: "Question",
         done: function (right, total) {
           var passed = right >= Math.ceil(total * TEST_PASS);
-          var prev = extras.tests[m.n] || {};
+          var prev = extras.tests[m.id] || {};
           var rec = { best: Math.max(right, prev.best || 0), passed: passed || !!prev.passed, date: passed && !prev.passed ? dayKey() : (prev.date || dayKey()) };
-          extras.tests[m.n] = rec; saveExtras(); logDay("r");
+          extras.tests[m.id] = rec; saveExtras(); logDay("r");
           if (passed) celebrate();
           box.innerHTML = '<div class="result ' + (passed ? "pass" : "fail") + '">Abbas, you scored ' + right + " out of " + total + ". " +
             (passed ? "You passed the Level " + m.n + " test. Here is your certificate." : "You need " + Math.ceil(total * TEST_PASS) + " to pass. Review the lessons you’re unsure of and try again.") + "</div>" +
@@ -1890,7 +2161,7 @@
     var s = streak(), tl = todayLessons();
     var days = []; for (var i = -13; i <= 0; i++) days.push(addDays(i));
     var noted = ALL.filter(function (l) { return extras.notes[l.id] && extras.notes[l.id].trim(); });
-    var certs = READY.filter(function (m) { return extras.tests[m.n] && extras.tests[m.n].passed; });
+    var certs = READY.filter(function (m) { return extras.tests[m.id] && extras.tests[m.id].passed; });
     var totalDone = ALL.filter(function (l) { return isDone(l.id); }).length;
     main.innerHTML =
       '<section class="hero"><span class="eyebrow">Your space</span><h1>My learning</h1><p class="lead">Abbas, here is your streak, your notes, your certificates and a way to carry your progress to another device.</p></section>' +
@@ -1908,8 +2179,8 @@
         return '<li><a href="' + lessonHref(l.id) + '#my-notes"><span class="nl-tag">' + (l.level > 1 ? "Level " + l.level + ", lesson " + l.num : "Lesson " + l.num) + "</span><strong>" + esc(l.title) + '</strong></a><p>' + esc(extras.notes[l.id]).replace(/\n/g, "<br>") + "</p></li>";
       }).join("") + "</ul>" : '<p class="rv-note"><em>No notes yet. Every lesson has a "My notes" box just above the quiz; anything you type there appears here.</em></p>') + "</section>" +
       '<section id="certs"><span class="kicker">Proof of your progress</span><h2>Certificates</h2>' +
-      (certs.length ? certs.map(function (m) { return certHTML(m, extras.tests[m.n]); }).join("") : '<p class="rv-note"><em>Pass a level test to earn a certificate.</em></p>') +
-      '<ul class="test-links">' + READY.map(function (m) { var t = extras.tests[m.n]; return '<li><a href="review.html?test=' + m.n + '">Level ' + m.n + " test: " + esc(m.name) + "</a><span>" + (t ? (t.passed ? "Passed, best " : "Best ") + t.best + "/" + TEST_LEN : "Not taken yet") + "</span></li>"; }).join("") + "</ul></section>" +
+      (certs.length ? certs.map(function (m) { return certHTML(m, extras.tests[m.id]); }).join("") : '<p class="rv-note"><em>Pass a level test to earn a certificate.</em></p>') +
+      '<ul class="test-links">' + READY.map(function (m) { var t = extras.tests[m.id]; return '<li><a href="review.html?test=' + m.n + '">Level ' + m.n + " test: " + esc(m.name) + "</a><span>" + (t ? (t.passed ? "Passed, best " : "Best ") + t.best + "/" + TEST_LEN : "Not taken yet") + "</span></li>"; }).join("") + "</ul></section>" +
       '<section id="move"><span class="kicker">Laptop, phone, tablet</span><h2>Move my progress</h2>' +
       (ACCT ? '<div class="acct-box acct-page">' + accountPanel() + "</div>" +
         '<p class="rv-note"><em>Not signed in on a device? You can still carry your progress by hand: copy your save code here, send it to yourself, then paste it on the other device.</em></p>'
@@ -2005,7 +2276,7 @@
   function lessonsExtras() {
     var road = $("#road");
     if (!road) return;
-    var t = extras.tests[LV.n];
+    var t = extras.tests[LV.id];
     var spot = $("#lessons") || road;
     spot.insertAdjacentHTML("afterend", '<section id="level-test" class="cta-band test-band"><span class="kicker">Level ' + LV.n + ' test</span><h2>Ready to prove it, Abbas?</h2>' +
       "<p>" + TEST_LEN + " questions from across all " + LESSONS.length + " lessons. Get " + Math.ceil(TEST_LEN * TEST_PASS) + " right to earn your Level " + LV.n + " certificate." + (t ? " Your best so far: " + t.best + "/" + TEST_LEN + (t.passed ? ", passed." : ".") : "") + "</p>" +
@@ -2030,7 +2301,7 @@
     var next = nextAll();
     f.innerHTML = '<div class="foot-grid">' +
       '<div class="foot-brand"><p class="foot-name">Abbas’ AI Academy</p><p>Your path from AI beginner to master, one short lesson at a time.</p><p class="foot-note">Your progress is saved in this browser only.</p></div>' +
-      '<div><p class="foot-head">Learn</p><ul><li><a href="' + levelHref(LV.n) + '">Home</a></li><li><a href="' + lessonsHref(LV.n) + '">All Level ' + LV.n + ' lessons</a></li><li><a href="glossary.html">Glossary</a></li><li><a href="review.html">Review</a></li><li><a href="review.html?test=' + LV.n + '">Level ' + LV.n + ' test</a></li><li><a href="me.html">My learning</a></li>' +
+      '<div><p class="foot-head">Learn</p><ul><li><a href="' + levelHref(LV.n) + '">Home</a></li><li><a href="' + lessonsHref(LV.n) + '">All Level ' + LV.n + ' lessons</a></li><li><a href="' + toolsHref() + '">AI tools directory</a></li><li><a href="glossary.html">Glossary</a></li><li><a href="review.html">Review</a></li><li><a href="review.html?test=' + LV.n + '">Level ' + LV.n + ' test</a></li><li><a href="me.html">My learning</a></li>' +
         (next ? '<li><a href="' + lessonHref(next.id) + '">Next lesson: ' + esc(next.title) + "</a></li>" : "") + "</ul></div>" +
       '<div><p class="foot-head">Level ' + LV.n + ' units</p><ul>' + UNITS.map(function (u, i) {
         var first = LESSONS.find(function (l) { return l.unit === u.id; });

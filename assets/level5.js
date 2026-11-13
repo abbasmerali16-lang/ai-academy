@@ -1,4 +1,4 @@
-/* Level 5 course content: Mastery, build and deploy.
+/* Level 6 course content: Mastery, build and deploy.
    Same shape as earlier levels. All lesson text and code is original writing; sources are credited for
    fact-checking and further reading. Code boxes run real Python in the page. The page can't call real AI
    services, so examples that would need an API use stand-ins and say so.
@@ -26,7 +26,7 @@ window.LEVEL5 = [
 <ul>
   <li><strong>model</strong>: which model to use. Providers offer families from small, fast and cheap to large and most capable.</li>
   <li><strong>system prompt</strong>: standing instructions: the role, rules, tone and format.</li>
-  <li><strong>messages</strong>: the conversation so far, each tagged with a role (user or assistant). The model remembers nothing between calls, so your app sends the relevant history every time (Level 4).</li>
+  <li><strong>messages</strong>: the conversation so far, each tagged with a role (user or assistant). The model remembers nothing between calls, so your app sends the relevant history every time (Level 5).</li>
   <li><strong>settings</strong>: the maximum length of the reply (in tokens), temperature, and optionally tools the model may call.</li>
 </ul>
 <p>The reply contains the model's text (or a tool request), the reason it stopped (finished, hit the length limit, wants a tool) and how many tokens were used.</p>
@@ -376,7 +376,7 @@ print(q, "-> keyword:", bm25(q)[:2], " meaning:", meaning_search(q)[:2])
     summary: "Designing tools, the agent loop, permissions and human approval, step budgets, tracing and testing agents.",
     minutes: 14,
     body: `
-<p>In Level 4 you saw how agents work: a model in a loop, choosing tools and reading results. Building one that you'd trust with real customers or real systems is mostly about the code around the model, Abbas. This lesson covers the guard rails.</p>
+<p>In Level 5 you saw how agents work: a model in a loop, choosing tools and reading results. Building one that you'd trust with real customers or real systems is mostly about the code around the model, Abbas. This lesson covers the guard rails.</p>
 
 <h2>Start simpler than you think</h2>
 <p>Ask first whether you need an agent at all. If the steps are known in advance (look up the order, check the policy, draft a reply), a fixed <strong>workflow</strong> that calls the model at each step is cheaper, faster and easier to test. Use an open-ended agent when the path genuinely depends on what's found along the way, as in debugging code or research.</p>
@@ -453,7 +453,7 @@ print(f"\\n{len(log)} entries in the audit log")
 <p>The scripted "model" tries three things: a safe lookup (allowed), a refund (paused for a person) and a tool that doesn't exist (refused). None of these protections depend on the model behaving well: they're enforced by ordinary code. Try passing <code>approve=lambda call: True</code> to <code>run_agent</code>, or lowering <code>max_steps</code> to 2.</p>
 
 <h2>Connecting tools with MCP</h2>
-<p>With the Model Context Protocol (Level 4), you can write a tool once as an MCP server and use it from any compatible app. The same cautions apply to MCP servers you install from others: they run with whatever access you give them, so use trusted sources, review permissions and keep them updated, exactly as you would any software dependency.</p>
+<p>With the Model Context Protocol (Level 5), you can write a tool once as an MCP server and use it from any compatible app. The same cautions apply to MCP servers you install from others: they run with whatever access you give them, so use trusted sources, review permissions and keep them updated, exactly as you would any software dependency.</p>
 
 <h2>Testing agents</h2>
 <p>Agents are harder to test than single prompts because there are many possible paths. Build a set of realistic tasks with clear success checks (was the right refund created, did the tests pass), run each several times because results vary, and track success rate, steps, cost and any guard-rail triggers. Review a sample of full traces by hand: they show <em>why</em> things fail.</p>
@@ -511,7 +511,7 @@ print(f"\\n{len(log)} entries in the audit log")
 <div class="table-scroll"><table>
   <tr><th>Grader</th><th>Good for</th><th>Watch out for</th></tr>
   <tr><td><strong>Code checks</strong> (exact match, contains, valid JSON, number within tolerance)</td><td>Facts, formats, classifications</td><td>Too strict on wording; write checks for meaning where you can</td></tr>
-  <tr><td><strong>Model graders</strong> (an LLM with a clear rubric)</td><td>Tone, helpfulness, faithfulness to sources</td><td>Biases from Level 4; check them against people</td></tr>
+  <tr><td><strong>Model graders</strong> (an LLM with a clear rubric)</td><td>Tone, helpfulness, faithfulness to sources</td><td>Biases from Level 5; check them against people</td></tr>
   <tr><td><strong>Human review</strong></td><td>The final word on quality; building the rubric</td><td>Slow and costly; reviewers disagree</td></tr>
 </table></div>
 <p>A good rule: use code checks wherever possible, model graders for what code can't judge, and humans to calibrate both. Researchers studying this (Shankar and colleagues, 2024) found that people's idea of "good" sharpens as they read outputs, so expect to refine your criteria.</p>
@@ -559,7 +559,7 @@ for t, a, b in zip(tests, results["v1"], results["v2"]):
 <ul>
   <li><strong>Run on every change</strong> to prompts, models, retrieval or tools, like the automatic tests that run on every code change (continuous integration).</li>
   <li><strong>Look at failures, not just scores.</strong> Reading twenty failed cases teaches more than any average.</li>
-  <li><strong>Run variable systems several times</strong>, because one run can be lucky. Remember the noise lesson from Level 4: small differences on small sets may be chance.</li>
+  <li><strong>Run variable systems several times</strong>, because one run can be lucky. Remember the noise lesson from Level 5: small differences on small sets may be chance.</li>
   <li><strong>Track cost and speed too.</strong> A version that's 1% better and three times slower may not be an improvement.</li>
   <li><strong>After launch,</strong> compare versions on real traffic with an A/B test, and keep sampling live conversations for review.</li>
 </ul>
@@ -618,7 +618,7 @@ import pickle, time, hashlib, json
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 
-# 1. Train a model (a stand-in for your Level 3 work; features are already scaled)
+# 1. Train a model (a stand-in for your Level 4 work; features are already scaled)
 rng = np.random.default_rng(0)
 X = rng.normal(size=(2000, 3))
 y = (X @ np.array([-1.5, 2.0, -0.5]) + rng.normal(0, 0.5, 2000) > 0).astype(int)
@@ -737,7 +737,7 @@ def predict_endpoint(payload: dict):
 <p>Two common measures compare live data with training data:</p>
 <ul>
   <li>The <strong>population stability index</strong> (PSI) splits the training data into bins and compares the share of live data in each. A widely used rule of thumb from credit scoring: under 0.1 is stable, 0.1 to 0.25 deserves a look, above 0.25 needs action.</li>
-  <li>The <strong>Kolmogorov-Smirnov test</strong> (Level 2's hypothesis testing) asks whether two samples could come from the same distribution.</li>
+  <li>The <strong>Kolmogorov-Smirnov test</strong> (Level 3's hypothesis testing) asks whether two samples could come from the same distribution.</li>
 </ul>
 
 <div data-widget="py" data-title="Try it: detect drift week by week"><textarea>
@@ -773,7 +773,7 @@ for name, live in weeks.items():
 <p>Week 4 is unmistakable. But look at week 2: the KS test says the change is statistically significant (p is about 0.002), while PSI calls it stable. Both are right. With thousands of rows, even a one-year shift in average age is detectable, but it's too small to matter. Use significance to know a change is real, and a size measure like PSI, plus model performance, to decide whether it matters.</p>
 
 <h2>Monitoring LLM applications</h2>
-<p>For language-model apps, also track: the topics people ask about (new ones reveal gaps), refusal rates, how often answers cite sources, thumbs up or down, escalations to people, and cost per conversation. Sample real conversations for review against your eval criteria. Logged prompts can contain personal data, so apply the privacy rules from Level 2: collect only what you need, protect it and delete it on schedule.</p>
+<p>For language-model apps, also track: the topics people ask about (new ones reveal gaps), refusal rates, how often answers cite sources, thumbs up or down, escalations to people, and cost per conversation. Sample real conversations for review against your eval criteria. Logged prompts can contain personal data, so apply the privacy rules from Level 3: collect only what you need, protect it and delete it on schedule.</p>
 
 <h2>Responding</h2>
 <ul>
@@ -860,7 +860,7 @@ print(f"\\nWith {repeat_share:.0%} of requests answered from a cache, every bill
   <tr><td><strong>Caching</strong></td><td>Store answers to repeated questions; use prompt caching for repeated long prompts</td></tr>
   <tr><td><strong>Shorter prompts and outputs</strong></td><td>Trim history and boilerplate; ask for concise answers; set max tokens</td></tr>
   <tr><td><strong>Batch APIs</strong></td><td>Large discounts for work that can wait hours</td></tr>
-  <tr><td><strong>Smaller models</strong></td><td>Fine-tuned or distilled small models (Level 4) for narrow, high-volume tasks</td></tr>
+  <tr><td><strong>Smaller models</strong></td><td>Fine-tuned or distilled small models (Level 5) for narrow, high-volume tasks</td></tr>
   <tr><td><strong>Quantisation and efficient serving</strong></td><td>If self-hosting: 8- or 4-bit models, continuous batching, the right GPU</td></tr>
   <tr><td><strong>Not using AI</strong></td><td>A lookup table, a search box or a rule is sometimes the best answer</td></tr>
 </table></div>
@@ -1241,14 +1241,14 @@ print("High-rated risks needing an owner and a deadline:", (risks["rating"] == "
 <ul>
   <li><strong>What it's for</strong> and, just as important, what it's <em>not</em> for.</li>
   <li><strong>Training data</strong>: where it came from, and its known gaps.</li>
-  <li><strong>Evaluation:</strong> metrics on the test set, broken down by relevant groups (Level 3's fairness lesson).</li>
+  <li><strong>Evaluation:</strong> metrics on the test set, broken down by relevant groups (Level 4's fairness lesson).</li>
   <li><strong>Limitations, risks</strong> and ethical considerations.</li>
   <li>Version, date, owner and how to report problems.</li>
 </ul>
 <p>A <strong>datasheet for datasets</strong> (Gebru and colleagues, 2018) does the same for data: why it was collected, by whom, what's in it, how it was labelled, and what it shouldn't be used for. Large AI developers now publish <strong>system cards</strong> for their models, describing safety testing as well. Hugging Face asks for a model card for every model shared on its hub. For high-risk systems, the EU AI Act makes documentation like this a legal duty.</p>
 
 <h2>Data protection, revisited</h2>
-<p>Level 2 introduced UK GDPR's principles. For AI, three duties stand out:</p>
+<p>Level 3 introduced UK GDPR's principles. For AI, three duties stand out:</p>
 <ul>
   <li><strong>Data protection impact assessments (DPIAs)</strong> are required before processing likely to pose a high risk to people, which covers many AI projects. They describe the processing, assess the necessity and the risks, and record how risks are reduced.</li>
   <li><strong>Automated decisions:</strong> people have rights when significant decisions about them are made purely by machine, including the right to human review. The UK's Data (Use and Access) Act 2025 relaxed some of these rules, but key safeguards remain.</li>
@@ -1360,7 +1360,7 @@ for eps in [0.1, 1.0, 10.0]:
   <li><strong>No error bars or a single run.</strong> Training is random, so one lucky run proves little.</li>
   <li><strong>Weak baselines:</strong> the new method beats an old method that nobody tuned properly.</li>
   <li><strong>No ablations:</strong> the paper changes five things and doesn't show which one caused the gain.</li>
-  <li><strong>Leakage</strong> between training and test data (Level 3). Kapoor and Narayanan (2023) found leakage problems affecting hundreds of published papers across many scientific fields.</li>
+  <li><strong>Leakage</strong> between training and test data (Level 4). Kapoor and Narayanan (2023) found leakage problems affecting hundreds of published papers across many scientific fields.</li>
   <li><strong>Benchmark contamination:</strong> the test questions may have been in the model's training data.</li>
   <li><strong>Speculation presented as explanation,</strong> or impressive-sounding maths that doesn't support the claims.</li>
   <li><strong>Missing code, data or details,</strong> so nobody can check the results. Major conferences now ask authors to fill in reproducibility checklists for this reason.</li>
@@ -1396,7 +1396,7 @@ print(f"95% interval for the gain: {lo:+.1%} to {hi:+.1%}")
 seed_scores = [80.6, 81.9, 79.8, 81.2, 80.1]          # the kind of spread papers often don't report
 print(f"A over 5 seeds: {min(seed_scores)}% to {max(seed_scores)}% (spread {max(seed_scores) - min(seed_scores):.1f} points)")
 </textarea></div>
-<p>A 1.8-point gain sounds like progress, but the models only disagree on 55 questions, and B wins 32 of them to A's 23. McNemar's test gives p = 0.28, and the bootstrap interval for the gain runs from about minus 1.2 to plus 4.6 points, which includes zero. Add the fact that A's own score moves by 2 points just from changing the random seed, and the honest conclusion is: <em>maybe</em> better, not shown. This is Level 2's hypothesis testing put to work. Dror and colleagues (2018) found that many language-processing papers didn't test their improvements for significance at all.</p>
+<p>A 1.8-point gain sounds like progress, but the models only disagree on 55 questions, and B wins 32 of them to A's 23. McNemar's test gives p = 0.28, and the bootstrap interval for the gain runs from about minus 1.2 to plus 4.6 points, which includes zero. Add the fact that A's own score moves by 2 points just from changing the random seed, and the honest conclusion is: <em>maybe</em> better, not shown. This is Level 3's hypothesis testing put to work. Dror and colleagues (2018) found that many language-processing papers didn't test their improvements for significance at all.</p>
 
 <h2>Practical habits</h2>
 <ul>
@@ -1446,7 +1446,7 @@ print(f"A over 5 seeds: {min(seed_scores)}% to {max(seed_scores)}% (spread {max(
 <p>AI research moves faster than almost any other field, so any snapshot dates quickly. Instead of chasing headlines, this lesson gives you the big questions researchers are working on. Once you know them, Abbas, you can place new announcements in context. Treat specific numbers here as a picture at the time of writing.</p>
 
 <h2>1. Reasoning and test-time compute</h2>
-<p>For years, progress came mainly from scaling up training: bigger models, more data, more computing power (Level 4). Since 2024, a second lever has grown in importance: letting models <strong>think longer at answer time</strong>. Reasoning models, such as OpenAI's o1 and DeepSeek-R1, are trained with reinforcement learning to work through problems step by step before answering. On maths, coding and science problems, spending more computation per answer reliably raises scores. Open questions include how far this generalises beyond tasks with checkable answers, and whether the written-out reasoning reflects what the model actually computes.</p>
+<p>For years, progress came mainly from scaling up training: bigger models, more data, more computing power (Level 5). Since 2024, a second lever has grown in importance: letting models <strong>think longer at answer time</strong>. Reasoning models, such as OpenAI's o1 and DeepSeek-R1, are trained with reinforcement learning to work through problems step by step before answering. On maths, coding and science problems, spending more computation per answer reliably raises scores. Open questions include how far this generalises beyond tasks with checkable answers, and whether the written-out reasoning reflects what the model actually computes.</p>
 
 <h2>2. Agents that work for longer</h2>
 <p>The research group METR measured how long a task (judged by how long it takes skilled people) AI agents can complete with 50% reliability. In their 2025 study, that length had been doubling roughly every seven months for six years. If the trend continued, agents would move from minutes-long tasks to days-long projects within a few years. Whether it continues, and how reliability on long tasks improves, is one of the most watched questions in the field.</p>
@@ -1652,11 +1652,11 @@ print("Skills to grow next:", ", ".join(f"{s} (+{g})" for s, g in sorted(gaps.it
 
 <h2>The project life cycle</h2>
 <ol>
-  <li><strong>Frame the problem</strong> (Level 3): who is it for, what decision does it support, and how will you measure success? Write the success metric down before you start.</li>
-  <li><strong>Get and understand the data</strong> (Level 2): where it comes from, its quality, its gaps, and the privacy rules that apply.</li>
+  <li><strong>Frame the problem</strong> (Level 4): who is it for, what decision does it support, and how will you measure success? Write the success metric down before you start.</li>
+  <li><strong>Get and understand the data</strong> (Level 3): where it comes from, its quality, its gaps, and the privacy rules that apply.</li>
   <li><strong>Build a baseline</strong>: the simplest thing that could work. Every later result is judged against it.</li>
-  <li><strong>Build the model</strong>: classic machine learning (Level 3) or an LLM with prompts, retrieval or fine-tuning (Levels 4 and 5). Choose the simplest approach that meets the goal.</li>
-  <li><strong>Evaluate honestly</strong> (Level 3 and Unit 2): a held-out test set, the right metrics, error analysis, results by group, and an eval set for LLM features.</li>
+  <li><strong>Build the model</strong>: classic machine learning (Level 4) or an LLM with prompts, retrieval or fine-tuning (Levels 5 and 6). Choose the simplest approach that meets the goal.</li>
+  <li><strong>Evaluate honestly</strong> (Level 4 and Unit 2): a held-out test set, the right metrics, error analysis, results by group, and an eval set for LLM features.</li>
   <li><strong>Secure and red-team it</strong> (Unit 3): what could go wrong, and what happens when someone tries?</li>
   <li><strong>Document it</strong> (Unit 3): a model card with its purpose, limits and results.</li>
   <li><strong>Ship it</strong> (Unit 2): a demo, an API or an app, released carefully.</li>
