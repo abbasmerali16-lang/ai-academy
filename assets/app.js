@@ -202,7 +202,7 @@
     document.addEventListener("click", function (e) { if (!form.contains(e.target) && !out.contains(e.target) && !(chips && chips.parentNode.contains(e.target))) out.hidden = true; });
     q.addEventListener("keydown", function (e) { if (e.key === "Escape") { out.hidden = true; } });
 
-    var topics = ["Chatbots", "Neural networks", "Prompting", "Machine learning", "Python", "Data", "pandas", "Bias", "Generative AI", "Statistics", "Probability", "Deep learning", "Algorithms", "Matrices", "Computer vision", "Ethics", "AI laws", "Privacy", "History", "Accuracy"];
+    var topics = ["Chatbots", "Neural networks", "Prompting", "Machine learning", "Python", "Data", "pandas", "Bias", "Generative AI", "Statistics", "Probability", "Deep learning", "Algorithms", "Matrices", "Overfitting", "Random forests", "Clustering", "Fairness", "Computer vision", "Ethics", "AI laws", "Privacy", "History", "Accuracy"];
     if (chips) {
       chips.innerHTML = topics.map(function (t) { return '<button type="button" class="topic-chip">' + esc(t) + "</button>"; }).join("");
       chips.addEventListener("click", function (e) {
@@ -875,6 +875,132 @@
       el.querySelector("[data-reset]").onclick = function () { x = -3.6; steps = 0; draw(); };
       inp.addEventListener("input", function () { draw(); });
       draw();
+    },
+
+    /* ===== Level 3 activities ===== */
+
+    /* Precision and recall: move the threshold over 40 scored cases and watch the confusion matrix. */
+    "pr-tradeoff": function (el) {
+      // [model score, truly positive?] for 40 invented screening cases
+      var seed = 3, rnd = function () { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+      var cases = [];
+      for (var i = 0; i < 40; i++) { var pos = i < 12; cases.push([Math.min(0.99, Math.max(0.01, (pos ? 0.68 : 0.32) + (rnd() - 0.5) * 0.7)), pos]); }
+      el.className = "panel";
+      el.innerHTML = "<h3>Try it: set the threshold</h3><p>Forty patients have been scored by a screening model. Gold dots really have the condition; grey dots don't. Everyone to the right of the line is flagged. Move the line and watch the four boxes.</p>" +
+        '<svg class="plot" viewBox="0 0 320 90" role="img" aria-label="Scores of 40 cases on a line from 0 to 1 with a movable threshold"></svg>' +
+        '<label class="slider-row"><span>Threshold</span><input type="range" min="0.05" max="0.95" step="0.01" value="0.5"><output></output></label>' +
+        '<div class="table-scroll"><table class="cm"><tr><th></th><th>Flagged</th><th>Not flagged</th></tr><tr><th>Has it</th><td data-k="tp"></td><td data-k="fn"></td></tr><tr><th>Doesn\'t</th><td data-k="fp"></td><td data-k="tn"></td></tr></table></div>' +
+        '<div class="neuron-out" aria-live="polite"></div>';
+      var svg = el.querySelector("svg"), inp = el.querySelector("input");
+      function update() {
+        var t = +inp.value; inp.nextElementSibling.textContent = t.toFixed(2);
+        var c = { tp: 0, fp: 0, fn: 0, tn: 0 }, X = function (v) { return 10 + v * 300; };
+        var h = '<line class="axis" x1="10" y1="60" x2="310" y2="60"/><text x="10" y="80" font-size="11">0</text><text x="304" y="80" font-size="11">1</text>';
+        var row = {};
+        cases.forEach(function (cs) {
+          var flag = cs[0] >= t; c[(flag ? (cs[1] ? "tp" : "fp") : (cs[1] ? "fn" : "tn"))]++;
+          var bx = Math.round(cs[0] * 30); row[bx] = (row[bx] || 0) + 1;
+          h += '<circle class="' + (cs[1] ? "dot" : "dot-off") + '" cx="' + X(cs[0]) + '" cy="' + (56 - (row[bx] - 1) * 9) + '" r="4"/>';
+        });
+        h += '<line class="fit" x1="' + X(t) + '" y1="5" x2="' + X(t) + '" y2="66"/>';
+        svg.innerHTML = h;
+        Object.keys(c).forEach(function (k) { el.querySelector('[data-k="' + k + '"]').textContent = c[k] + (k === "fn" ? " missed" : k === "fp" ? " false alarms" : k === "tp" ? " caught" : " correctly clear"); });
+        var prec = c.tp + c.fp ? c.tp / (c.tp + c.fp) : 0, rec = c.tp / (c.tp + c.fn);
+        el.querySelector(".neuron-out").innerHTML = "Precision <strong>" + Math.round(prec * 100) + "%</strong> (of those flagged, how many really have it). Recall <strong>" + Math.round(rec * 100) + "%</strong> (of those who have it, how many we caught). Accuracy " + Math.round(100 * (c.tp + c.tn) / 40) + "%. " +
+          (rec >= 0.99 ? "Nobody is missed, at the cost of more false alarms." : rec < 0.6 ? "Many real cases are being missed. For a screening test, that's the costly mistake." : "Slide left to catch more cases, right for fewer false alarms.");
+      }
+      inp.addEventListener("input", update); update();
+    },
+
+    /* Overfitting: fit curves of different flexibility to noisy points and compare training and test error. */
+    "overfit": function (el) {
+      var seed = 9, rnd = function () { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+      var g = function () { return Math.sqrt(-2 * Math.log(rnd() + 1e-9)) * Math.cos(2 * Math.PI * rnd()); };
+      var truth = function (x) { return Math.sin(x * 1.3); };
+      var train = [], test = [];
+      for (var i = 0; i < 12; i++) { var x = -2.4 + i * 0.43 + (rnd() - 0.5) * 0.2; train.push([x, truth(x) + g() * 0.25]); }
+      for (var j = 0; j < 30; j++) { var x2 = -2.4 + rnd() * 4.8; test.push([x2, truth(x2) + g() * 0.25]); }
+      el.className = "panel";
+      el.innerHTML = "<h3>Try it: too simple, too flexible, just right</h3><p>Gold dots are the training data; grey dots are new test data the model never sees. Raise the flexibility (the polynomial degree) and watch both errors.</p>" +
+        '<svg class="plot" viewBox="0 0 320 200" role="img" aria-label="Training and test points with a fitted curve"></svg>' +
+        '<label class="slider-row"><span>Flexibility</span><input type="range" min="0" max="11" step="1" value="1"><output></output></label>' +
+        '<div class="neuron-out" aria-live="polite"></div>';
+      var svg = el.querySelector("svg"), inp = el.querySelector("input");
+      // Least squares polynomial fit by solving the normal equations (with a tiny ridge for stability).
+      function fit(d) {
+        var n = d + 1, A = [], b = [];
+        for (var r = 0; r < n; r++) { A.push(new Array(n).fill(0)); b.push(0); }
+        train.forEach(function (p) { var xs = []; for (var k = 0; k < n; k++) xs.push(Math.pow(p[0] / 2.4, k));
+          for (var r2 = 0; r2 < n; r2++) { b[r2] += xs[r2] * p[1]; for (var c2 = 0; c2 < n; c2++) A[r2][c2] += xs[r2] * xs[c2]; } });
+        for (var q = 0; q < n; q++) A[q][q] += 1e-9;
+        for (var col = 0; col < n; col++) {
+          var piv = col; for (var r3 = col + 1; r3 < n; r3++) if (Math.abs(A[r3][col]) > Math.abs(A[piv][col])) piv = r3;
+          var tA = A[col]; A[col] = A[piv]; A[piv] = tA; var tb = b[col]; b[col] = b[piv]; b[piv] = tb;
+          for (var r4 = col + 1; r4 < n; r4++) { var f = A[r4][col] / A[col][col]; for (var c4 = col; c4 < n; c4++) A[r4][c4] -= f * A[col][c4]; b[r4] -= f * b[col]; }
+        }
+        var w = new Array(n).fill(0);
+        for (var r5 = n - 1; r5 >= 0; r5--) { var sum = b[r5]; for (var c5 = r5 + 1; c5 < n; c5++) sum -= A[r5][c5] * w[c5]; w[r5] = sum / A[r5][r5]; }
+        return function (x) { var y = 0; for (var k = 0; k < n; k++) y += w[k] * Math.pow(x / 2.4, k); return y; };
+      }
+      var X = function (x) { return 160 + x * 60; }, Y = function (y) { return 100 - y * 55; };
+      function mse(f, d) { return d.reduce(function (a, p) { var e = f(p[0]) - p[1]; return a + e * e; }, 0) / d.length; }
+      function update() {
+        var d = +inp.value; inp.nextElementSibling.textContent = d;
+        var f = fit(d), h = '<line class="axis" x1="10" y1="100" x2="310" y2="100"/>', path = "";
+        for (var x = -2.5; x <= 2.5; x += 0.025) { var yy = Math.max(-1.7, Math.min(1.7, f(x))); path += (path ? "L" : "M") + X(x).toFixed(1) + " " + Y(yy).toFixed(1) + " "; }
+        test.forEach(function (p) { h += '<circle class="dot-off" cx="' + X(p[0]) + '" cy="' + Y(p[1]) + '" r="3.5"/>'; });
+        train.forEach(function (p) { h += '<circle class="dot" cx="' + X(p[0]) + '" cy="' + Y(p[1]) + '" r="5"/>'; });
+        h += '<path class="fit" fill="none" d="' + path + '"/>';
+        svg.innerHTML = h;
+        var tr = mse(f, train), te = mse(f, test);
+        el.querySelector(".neuron-out").innerHTML = "Training error <strong>" + tr.toFixed(3) + "</strong>, test error <strong>" + (te > 9.99 ? "over 10" : te.toFixed(3)) + "</strong>. " +
+          (d <= 1 ? "Underfitting: a straight line can't follow the wave, so both errors are high." : d <= 5 ? "About right: the curve follows the pattern and the test error is low." : "Overfitting: the curve bends to hit every training dot, so training error keeps falling while test error climbs.");
+      }
+      inp.addEventListener("input", update); update();
+    },
+
+    /* k-means, one step at a time. */
+    "kmeans": function (el) {
+      var seed = 5, rnd = function () { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+      var g = function () { return Math.sqrt(-2 * Math.log(rnd() + 1e-9)) * Math.cos(2 * Math.PI * rnd()); };
+      var centres = [[80, 60], [230, 70], [150, 150]], pts = [];
+      centres.forEach(function (c) { for (var i = 0; i < 25; i++) pts.push([c[0] + g() * 22, c[1] + g() * 18]); });
+      var cols = ["km-a", "km-b", "km-c"], cent, assign, stage, steps;
+      el.className = "panel";
+      el.innerHTML = "<h3>Try it: run k-means by hand</h3><p>Three centroids (the squares) start in random places. Press Step to alternate between the two moves: assign every point to its nearest centroid, then move each centroid to the middle of its points.</p>" +
+        '<svg class="plot" viewBox="0 0 320 200" role="img" aria-label="Points being grouped into three clusters"></svg>' +
+        '<div class="chip-row"><button class="chip" type="button" data-step>Step</button><button class="chip" type="button" data-reset>New random start</button></div>' +
+        '<div class="neuron-out" aria-live="polite"></div>';
+      var svg = el.querySelector("svg");
+      function reset() { cent = [0, 1, 2].map(function () { return [30 + rnd() * 260, 20 + rnd() * 160]; }); assign = pts.map(function () { return -1; }); stage = 0; steps = 0; draw("Press Step to assign each point to its nearest centroid."); }
+      function draw(msg) {
+        var h = "";
+        pts.forEach(function (p, i) { h += '<circle class="' + (assign[i] < 0 ? "dot-off" : cols[assign[i]]) + '" cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="4"/>'; });
+        cent.forEach(function (c, k) { h += '<rect class="' + cols[k] + ' km-centre" x="' + (c[0] - 7).toFixed(1) + '" y="' + (c[1] - 7).toFixed(1) + '" width="14" height="14"/>'; });
+        svg.innerHTML = h;
+        el.querySelector(".neuron-out").textContent = msg;
+      }
+      el.querySelector("[data-step]").onclick = function () {
+        if (stage === 0) {
+          var changed = 0;
+          pts.forEach(function (p, i) {
+            var best = 0, bd = 1e9;
+            cent.forEach(function (c, k) { var d = (p[0] - c[0]) * (p[0] - c[0]) + (p[1] - c[1]) * (p[1] - c[1]); if (d < bd) { bd = d; best = k; } });
+            if (assign[i] !== best) changed++; assign[i] = best;
+          });
+          stage = 1; steps++;
+          draw(changed ? "Assigned: " + changed + " points changed colour. Now press Step to move each centroid to the middle of its points." : "No point changed group, so k-means has converged after " + steps + " rounds. Try a new random start: sometimes it settles on a worse answer, which is why it's run several times.");
+        } else {
+          cent = cent.map(function (c, k) {
+            var mine = pts.filter(function (p, i) { return assign[i] === k; });
+            if (!mine.length) return c;
+            return [mine.reduce(function (a, p) { return a + p[0]; }, 0) / mine.length, mine.reduce(function (a, p) { return a + p[1]; }, 0) / mine.length];
+          });
+          stage = 0; draw("Centroids moved to the average of their points. Press Step to reassign.");
+        }
+      };
+      el.querySelector("[data-reset]").onclick = reset;
+      reset();
     }
   };
 

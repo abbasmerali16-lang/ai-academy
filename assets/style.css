@@ -746,3 +746,7 @@ body[data-page="home"] #how, body[data-page="home"] #faq { background: var(--sur
 .dd-mega { left: 24px; right: 24px; width: auto; max-width: 1192px; margin: 0 auto; transform: none; top: calc(100% + 4px); }
 .il-progress .bar { background: #dbe3e9; }
 .foot-grid, .foot-bottom { max-width: 1192px; }
+.plot .dot-off { fill: var(--muted); opacity: .45; }
+.plot .km-a { fill: var(--accent); } .plot .km-b { fill: var(--gold); } .plot .km-c { fill: #7a4fa3; }
+.plot .km-centre { stroke: var(--heading); stroke-width: 2; }
+.cm { max-width: 420px; font-size: 15px; } .cm td { text-align: center; font-variant-numeric: tabular-nums; }
