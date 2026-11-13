@@ -26,6 +26,7 @@
   // Addresses of pages (the Claude-hosted copy swaps these for in-page links).
   function lessonHref(id) { return "lesson.html?id=" + id; }
   function levelHref(n) { return n > 1 ? "index.html?level=" + n : "index.html"; }
+  function lessonsHref(n) { return n > 1 ? "lessons.html?level=" + n : "lessons.html"; }
   function currentLessonId() { return new URLSearchParams(location.search).get("id"); }
   function requestedLevel() { return parseInt(new URLSearchParams(location.search).get("level"), 10) || 0; }
   var KEY = "aiAcademy.level1.v1";
@@ -67,7 +68,7 @@
     renderProgress($("#progress"));
     var list = $("#lesson-list");
     var lastUnit = null;
-    list.innerHTML = LESSONS.map(function (l, i) {
+    if (list) list.innerHTML = LESSONS.map(function (l, i) {
       var done = isDone(l.id);
       var head = "";
       if (l.unit && l.unit !== lastUnit) {
@@ -83,11 +84,11 @@
 
     var next = LESSONS.find(function (l) { return !isDone(l.id); });
     var start = $("#start-btn");
-    if (next) {
+    if (start && next) {
       start.href = lessonHref(next.id);
       start.textContent = doneCount() ? "Welcome back, Abbas. Continue: " + next.title : (LV.n > 1 ? "Start Level " + LV.n + ", Lesson 1" : "Start Lesson 1");
-    } else {
-      start.href = "#certificate";
+    } else if (start) {
+      start.href = page === "lessons" ? "#certificate" : lessonsHref(LV.n) + "#certificate";
       start.textContent = "Level " + LV.n + " complete, Abbas";
     }
     var cert = $("#certificate");
@@ -105,8 +106,11 @@
   function renderLevelCopy() {
     var set = function (id, html) { var el = document.getElementById(id); if (el) el.innerHTML = html; };
     var title = "Level " + LV.n + " · " + esc(LV.name);
-    set("hero-eyebrow", "Welcome, Abbas · " + title);
-    set("hero-lead", "Abbas, this academy was built just for you. " + esc(LV.lead));
+    var onList = page === "lessons";
+    set("hero-eyebrow", onList ? title : "Welcome, Abbas · " + title);
+    set("hero-lead", onList ? "Abbas, here is everything in Level " + LV.n + " on one page: the units, every lesson, how lessons work and common questions." : "Abbas, this academy was built just for you. " + esc(LV.lead));
+    set("lp-title", "Your Level " + LV.n + " lessons");
+    if (onList) document.title = "Level " + LV.n + " lessons · Abbas’ AI Academy";
     set("units-kicker", title);
     set("units-title", ["", "One", "Two", "Three", "Four", "Five", "Six"][UNITS.length] + " units. One clear path.");
     set("lessons-kicker", "All " + LESSONS.length + " lessons");
@@ -120,7 +124,7 @@
       var state = m === LV ? "current" : (m.ready ? "open" : "locked");
       var label = m === LV ? "You are here" : (m.ready ? (d === m.lessons.length ? "Complete" : d ? d + " of " + m.lessons.length + " done" : "Available now") : "Coming soon");
       var inner = "<b>Level " + m.n + "</b>" + esc(m.name) + "<br><span>" + label + "</span>";
-      return m.ready ? '<a class="level ' + state + '" href="' + levelHref(m.n) + '">' + inner + "</a>" : '<div class="level locked">' + inner + "</div>";
+      return m.ready ? '<a class="level ' + state + '" href="' + (page === "lessons" ? lessonsHref(m.n) : levelHref(m.n)) + '">' + inner + "</a>" : '<div class="level locked">' + inner + "</div>";
     }).join(""));
   }
 
@@ -161,6 +165,21 @@
         '<span class="bar"><span style="width:' + Math.round(100 * d / ls.length) + '%"></span></span>' +
         '<span class="uc-go">' + (d === ls.length ? "Review unit" : d ? "Continue unit" : "Start unit") + " →</span></a>";
     }).join("");
+    var ab = $("#all-btn");
+    if (ab) { ab.href = lessonsHref(LV.n); ab.textContent = "See all Level " + LV.n + " lessons"; }
+    var pt = $("#path-tiles");
+    if (pt) {
+      var gloss = allTerms().length, open = READY.length;
+      var tile = function (href, label, title, text, meta, go, bar) {
+        return '<a class="unit-card path-tile" href="' + href + '"><span class="uc-num">' + label + "</span><strong>" + title + '</strong><span class="uc-blurb">' + text + "</span>" +
+          '<span class="uc-meta">' + meta + "</span>" + (bar != null ? '<span class="bar"><span style="width:' + bar + '%"></span></span>' : "") + '<span class="uc-go">' + go + " →</span></a>";
+      };
+      pt.innerHTML =
+        tile(lessonsHref(LV.n), "Level " + LV.n + " · " + esc(LV.name), "All lessons", "Every lesson in this level on one page, grouped into its " + UNITS.length + " units.", n + " of " + LESSONS.length + " done", "See all lessons", pct) +
+        tile("glossary.html", "Reference", "Glossary", "Every key term from every level in plain English, A to Z.", gloss + " key terms", "Open the glossary") +
+        tile("#road", "Your road", "All five levels", "See where you are and switch to any level that is ready.", open + " of " + LEVELS.length + " levels open", "See your road") +
+        tile(lessonsHref(LV.n) + "#how", "Good to know", "How it works", "How each lesson works, plus answers to common questions.", "Read, try, pass, dig deeper", "Find out more");
+    }
     initSearch();
     var cta = $("#cta-btn"), start = $("#start-btn");
     if (cta && start) { cta.href = start.getAttribute("href"); cta.textContent = start.textContent; }
@@ -250,7 +269,7 @@
       (prev ? '<a class="btn secondary" href="' + lessonHref(prev.id) + '">← ' + esc(prev.title) + "</a>" : '<a class="btn secondary" href="' + levelHref(LV.n) + '">← All lessons</a>') +
       (idx < LESSONS.length - 1 ? '<a class="btn" id="next-btn" href="' + lessonHref(nxt.id) + '">Next: ' + esc(nxt.title) + " →</a>" :
         nxt ? '<a class="btn" id="next-btn" href="' + lessonHref(nxt.id) + '">Start Level ' + nxt.level + ": " + esc(levelOf(nxt).name) + " →</a>" :
-        '<a class="btn" id="next-btn" href="' + levelHref(LV.n) + '#certificate">Finish Level ' + LV.n + " →</a>") +
+        '<a class="btn" id="next-btn" href="' + lessonsHref(LV.n) + '#certificate">Finish Level ' + LV.n + " →</a>") +
       "</nav>";
 
     $("#lesson").innerHTML = html;
@@ -315,7 +334,7 @@
       var retry = $("#retry");
       if (retry) retry.onclick = function () { $("#questions").innerHTML = ""; r.innerHTML = ""; renderQuiz(l); };
       if (passed && doneCount() === LESSONS.length) {
-        r.innerHTML += '<div class="result pass">Congratulations, Abbas! You\'ve finished every Level ' + LV.n + ' lesson. <a href="' + levelHref(LV.n) + '#certificate">See your completion badge</a>.</div>';
+        r.innerHTML += '<div class="result pass">Congratulations, Abbas! You\'ve finished every Level ' + LV.n + ' lesson. <a href="' + lessonsHref(LV.n) + '#certificate">See your completion badge</a>.</div>';
       }
     }
   }
@@ -1182,8 +1201,8 @@
   }
 
   var page = document.body.dataset.page;
-  if (page === "glossary" || page === "home") setLevel(pickLevel());
-  if (page === "home") renderHome();
+  if (page === "glossary" || page === "home" || page === "lessons") setLevel(pickLevel());
+  if (page === "home" || page === "lessons") renderHome();
   else if (page === "lesson") renderLesson();
   else if (page === "glossary") renderGlossary();
 
@@ -1256,8 +1275,8 @@
       '<a class="tn-link' + (page === "home" ? " active" : "") + '" href="' + levelHref(LV.n) + '">Home</a>' +
       '<div class="tn-item"><button class="tn-btn" type="button" aria-expanded="false">Levels</button>' +
         '<div class="dd dd-levels"><ul class="dd-list">' + levels + "</ul></div></div>" +
-      '<div class="tn-item tn-mega"><button class="tn-btn' + (page === "lesson" ? " active" : "") + '" type="button" aria-expanded="false">Lessons</button>' +
-        '<div class="dd dd-mega"><div class="dd-top"><span>Level ' + LV.n + ": " + esc(LV.name) + '</span><a href="' + levelHref(LV.n) + '#lessons">See all on one page →</a></div><div class="dd-cols">' + units + "</div></div></div>" +
+      '<div class="tn-item tn-mega"><button class="tn-btn' + (page === "lesson" || page === "lessons" ? " active" : "") + '" type="button" aria-expanded="false">Lessons</button>' +
+        '<div class="dd dd-mega"><div class="dd-top"><span>Level ' + LV.n + ": " + esc(LV.name) + '</span><a href="' + lessonsHref(LV.n) + '">See all on one page →</a></div><div class="dd-cols">' + units + "</div></div></div>" +
       '<a class="tn-link' + (page === "glossary" ? " active" : "") + '" href="glossary.html">Glossary</a>' +
       '<a class="tn-pill" href="' + levelHref(LV.n) + '" title="Your progress in Level ' + LV.n + '">Level ' + LV.n + " · " + n + "/" + t + "</a>";
     var items = nav.querySelectorAll(".tn-item");
@@ -1289,9 +1308,12 @@
   }
   function buildInline() {
     if (page === "home") {
+      var paths = document.getElementById("paths");
+      if (paths) paths.insertAdjacentHTML("afterend", termStrip());
+    } else if (page === "lessons") {
       document.querySelectorAll(".unit-head").forEach(function (h, i) { h.id = "unit-" + (i + 1); });
-      var how = document.getElementById("how");
-      if (how) how.insertAdjacentHTML("afterend", termStrip());
+      var top = document.querySelector("main .hero");
+      if (top) { pageBand([top.querySelector(".eyebrow"), top.querySelector("h1"), top.querySelector(".lead")]); top.remove(); }
     } else if (page === "lesson") {
       var art = document.getElementById("lesson");
       var l = lessonById(currentLessonId()) || ALL[0];
@@ -1337,7 +1359,7 @@
     var next = nextAll();
     f.innerHTML = '<div class="foot-grid">' +
       '<div class="foot-brand"><p class="foot-name">Abbas’ AI Academy</p><p>Your path from AI beginner to master, one short lesson at a time.</p><p class="foot-note">Your progress is saved in this browser only.</p></div>' +
-      '<div><p class="foot-head">Learn</p><ul><li><a href="' + levelHref(LV.n) + '">Home</a></li><li><a href="' + levelHref(LV.n) + '#lessons">All Level ' + LV.n + ' lessons</a></li><li><a href="glossary.html">Glossary</a></li>' +
+      '<div><p class="foot-head">Learn</p><ul><li><a href="' + levelHref(LV.n) + '">Home</a></li><li><a href="' + lessonsHref(LV.n) + '">All Level ' + LV.n + ' lessons</a></li><li><a href="glossary.html">Glossary</a></li>' +
         (next ? '<li><a href="' + lessonHref(next.id) + '">Next lesson: ' + esc(next.title) + "</a></li>" : "") + "</ul></div>" +
       '<div><p class="foot-head">Level ' + LV.n + ' units</p><ul>' + UNITS.map(function (u, i) {
         var first = LESSONS.find(function (l) { return l.unit === u.id; });
