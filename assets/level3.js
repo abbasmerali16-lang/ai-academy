@@ -1,4 +1,4 @@
-/* Level 4 course content: Machine learning in practice.
+/* Level 5 course content: Machine learning in practice.
    Same shape as Levels 1 and 2. All lesson text and code is original writing; sources are credited for
    fact-checking and further reading. Code boxes run real Python (with scikit-learn) in the page.
    Inside these template strings, write a Python backslash as two backslashes (\\n). */
@@ -18,7 +18,7 @@ window.LEVEL3 = [
     summary: "Turning a vague wish into a precise prediction task, with a target, a metric and a baseline to beat.",
     minutes: 12,
     body: `
-<p>Welcome to Level 4. You can now write Python, handle data with pandas and read the maths behind learning. From here you'll build real machine learning models. But the most common reason ML projects fail has nothing to do with algorithms: it's solving the wrong problem, or a problem that didn't need ML at all. So we start where every good project starts: with <strong>framing</strong>.</p>
+<p>Welcome to Level 5. You can now write Python, handle data with pandas and read the maths behind learning. From here you'll build real machine learning models. But the most common reason ML projects fail has nothing to do with algorithms: it's solving the wrong problem, or a problem that didn't need ML at all. So we start where every good project starts: with <strong>framing</strong>.</p>
 
 <h2>From a wish to a task</h2>
 <p>Someone says: "Use AI to reduce customer churn." That's a wish, not a task. A framed ML problem answers five questions:</p>
@@ -58,7 +58,7 @@ window.LEVEL3 = [
 <p>If a simple rule gets you 90% of the way, ship the rule first and collect data. A rule is easier to explain, test and fix.</p>
 
 <h2>The project lifecycle</h2>
-<p>An industry process model from the late 1990s, <strong>CRISP-DM</strong>, is still a good map: understand the business, understand the data, prepare it, model, evaluate, deploy, then loop back. Most of the time goes into the steps before and after modelling. This level follows the same order, and Level 6 covers deployment and monitoring.</p>
+<p>An industry process model from the late 1990s, <strong>CRISP-DM</strong>, is still a good map: understand the business, understand the data, prepare it, model, evaluate, deploy, then loop back. Most of the time goes into the steps before and after modelling. This level follows the same order, and Level 7 covers deployment and monitoring.</p>
 
 <div class="callout"><b>Takeaway:</b> Before choosing any algorithm, write down the target, when the prediction is made, what action it drives, how success is measured, and the baseline to beat.</div>
 `,
@@ -185,7 +185,7 @@ for name, part in [("train", y_train), ("validation", y_val), ("test", y_test)]:
 <h2>Numbers: scaling</h2>
 <p>Many models compare features directly, so a feature measured in thousands (income) can drown out one measured in single digits (number of children). Two common fixes:</p>
 <ul>
-  <li><strong>Standardisation:</strong> subtract the mean, divide by the standard deviation (the z-scores from Level 3). The default choice.</li>
+  <li><strong>Standardisation:</strong> subtract the mean, divide by the standard deviation (the z-scores from Level 4). The default choice.</li>
   <li><strong>Min-max scaling:</strong> squash values into the range 0 to 1.</li>
 </ul>
 <p>Scaling matters a lot for distance-based models like k-nearest neighbours, for regularised linear models, and for neural networks. Tree models don't care, because they only ask "is this value above or below a threshold?"</p>
@@ -203,13 +203,13 @@ for name, part in [("train", y_train), ("validation", y_val), ("test", y_test)]:
 <p>A raw timestamp is nearly useless; the parts of it are gold. Extract the hour, day of the week, month, whether it's a weekend or holiday, and time since some event ("days since last purchase"). For cyclic things like hour of the day, note that 23:00 and 00:00 are neighbours; sine and cosine encodings capture that.</p>
 
 <h2>Text</h2>
-<p>The simplest text features are word counts, the <strong>bag of words</strong> you built a tiny version of in Level 3. <strong>TF-IDF</strong> refines this by down-weighting words that appear everywhere ("the", "and") and up-weighting distinctive ones. In Level 5 you'll see how embeddings from neural networks capture meaning far better.</p>
+<p>The simplest text features are word counts, the <strong>bag of words</strong> you built a tiny version of in Level 4. <strong>TF-IDF</strong> refines this by down-weighting words that appear everywhere ("the", "and") and up-weighting distinctive ones. In Level 6 you'll see how embeddings from neural networks capture meaning far better.</p>
 
 <h2>Domain knowledge wins</h2>
 <p>The best features often come from understanding the problem. For house prices, "price per square metre in this postcode last year" beats raw columns. For fraud, "how different is this purchase from the customer's usual spending?" For bike hire, "is it a public holiday?" Talking to people who know the domain is one of the most valuable things a data scientist does.</p>
 
 <h2>Missing values as features</h2>
-<p>As in Level 3: fill gaps sensibly (with values learned from training data only), and consider adding a "was missing" flag, because the absence itself can carry information.</p>
+<p>As in Level 4: fill gaps sensibly (with values learned from training data only), and consider adding a "was missing" flag, because the absence itself can carry information.</p>
 
 <div data-widget="py" data-title="Try it: build features from raw data"><textarea>
 import pandas as pd
@@ -342,7 +342,7 @@ print(pipe.predict_proba(X_test.head(3))[:, 1].round(2))
 <p>Notice that the model is compared with the baseline straight away. Always do this: a number on its own means little.</p>
 
 <h2>Saving a model</h2>
-<p>A fitted pipeline can be saved to a file (commonly with the <code>joblib</code> library) and loaded later in an app or server to make predictions. Only load model files you trust: loading one can run code. Level 6 covers safer ways to package and serve models.</p>
+<p>A fitted pipeline can be saved to a file (commonly with the <code>joblib</code> library) and loaded later in an app or server to make predictions. Only load model files you trust: loading one can run code. Level 7 covers safer ways to package and serve models.</p>
 
 <div class="callout"><b>Takeaway:</b> Every scikit-learn object follows the same pattern: create, fit, then predict or transform. Put all preparation and the model into one Pipeline, with a ColumnTransformer for mixed columns, so nothing leaks and the whole thing can be reused.</div>
 `,
@@ -382,7 +382,7 @@ print(pipe.predict_proba(X_test.head(3))[:, 1].round(2))
     summary: "The oldest, clearest model: a weighted sum of features, how it's fitted, and how to read it.",
     minutes: 12,
     body: `
-<p>In Level 1 you dragged a line through house prices by hand, and in Level 3 you saw gradient descent roll downhill. <strong>Linear regression</strong> is where those ideas become a real, widely used model. It's often the first model to try for predicting a number, and even when it isn't the most accurate, it's the easiest to understand.</p>
+<p>In Level 1 you dragged a line through house prices by hand, and in Level 4 you saw gradient descent roll downhill. <strong>Linear regression</strong> is where those ideas become a real, widely used model. It's often the first model to try for predicting a number, and even when it isn't the most accurate, it's the easiest to understand.</p>
 
 <h2>The model</h2>
 <p>Linear regression predicts a number as a <strong>weighted sum</strong> of the features plus a constant:</p>
@@ -404,7 +404,7 @@ print(pipe.predict_proba(X_test.head(3))[:, 1].round(2))
 <ul>
   <li><strong>Units matter.</strong> A coefficient of 0.001 on income in pounds might be bigger in effect than 5 on number of children. To compare importance, standardise the features first.</li>
   <li><strong>Correlated features share credit.</strong> If two features move together (house size and number of rooms), the model can split the effect between them in odd ways, even giving one a negative sign.</li>
-  <li><strong>Association, not cause.</strong> A coefficient describes the pattern in the data, not what would happen if you changed that feature, exactly as you learned in Level 3.</li>
+  <li><strong>Association, not cause.</strong> A coefficient describes the pattern in the data, not what would happen if you changed that feature, exactly as you learned in Level 4.</li>
 </ul>
 
 <h2>Bending the line</h2>
@@ -420,7 +420,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, r2_score
 
-# The bike-hire data from Level 3's project
+# The bike-hire data from Level 4's project
 rng = np.random.default_rng(7); n = 400
 df = pd.DataFrame({"temp_c": rng.normal(16, 7, n).round(1), "rain": rng.choice([0, 0, 0, 1], n),
                    "weekend": np.tile([0, 0, 0, 0, 0, 1, 1], 58)[:n]})
@@ -501,7 +501,7 @@ print("Baseline MAE (always predict the training average):",
 <p>scikit-learn's <code>LogisticRegression</code> applies regularisation automatically, gently pulling coefficients towards zero to avoid overfitting. Its setting <code>C</code> controls this: a smaller C means stronger pulling. Because regularisation treats every coefficient alike, scale your features first, which a pipeline makes easy.</p>
 
 <h2>More than two classes</h2>
-<p>For three or more classes, the same idea extends using the <strong>softmax</strong> function, which turns a score for each class into probabilities that add up to 1. You'll see softmax again in Level 5, at the very end of every language model.</p>
+<p>For three or more classes, the same idea extends using the <strong>softmax</strong> function, which turns a score for each class into probabilities that add up to 1. You'll see softmax again in Level 6, at the very end of every language model.</p>
 
 <div data-widget="py" data-title="Try it: probabilities and odds"><textarea>
 import numpy as np
@@ -659,7 +659,7 @@ print(export_text(small, feature_names=["x1", "x2"]))
   <li>Add a fraction of that tree's output to the model. That fraction is the <strong>learning rate</strong>.</li>
   <li>Repeat hundreds or thousands of times.</li>
 </ol>
-<p>Each new tree is small, often just a few levels deep (a "weak learner"), but together they build a very precise model. The "gradient" in the name comes from the fact that fitting the residuals is gradient descent in disguise: each tree takes a step downhill on the loss, just like the ball in Level 3. Jerome Friedman set out this general framework in 2001, and it works with almost any loss: squared error for numbers, log loss for classes, and specialised ones for ranking.</p>
+<p>Each new tree is small, often just a few levels deep (a "weak learner"), but together they build a very precise model. The "gradient" in the name comes from the fact that fitting the residuals is gradient descent in disguise: each tree takes a step downhill on the loss, just like the ball in Level 4. Jerome Friedman set out this general framework in 2001, and it works with almost any loss: squared error for numbers, log loss for classes, and specialised ones for ranking.</p>
 
 <h2>The famous libraries</h2>
 <p>Modern implementations add speed and clever tricks:</p>
@@ -948,7 +948,7 @@ print("Score on the untouched test set:", round(search.score(X_test, y_test), 3)
   <li><strong>Variance</strong>: error from being too sensitive to the particular training sample. Train on a slightly different sample and you'd get a very different model. High variance means overfitting.</li>
   <li><strong>Noise</strong>: randomness in the data that no model can predict.</li>
 </ul>
-<p>More flexible models lower bias but raise variance. The best model sits where the total is smallest. (Very large neural networks sometimes behave in surprising ways here, a phenomenon called "double descent" that you'll meet in Level 5, but for classic models this picture holds well.)</p>
+<p>More flexible models lower bias but raise variance. The best model sits where the total is smallest. (Very large neural networks sometimes behave in surprising ways here, a phenomenon called "double descent" that you'll meet in Level 6, but for classic models this picture holds well.)</p>
 
 <h2>Learning curves</h2>
 <p>Plot training and validation scores as the training set grows. If both are low and close together, you're underfitting: use a more flexible model or better features; more data won't help much. If there's a big gap that narrows as data grows, you're overfitting, and more data will help.</p>
@@ -966,7 +966,7 @@ print("Score on the untouched test set:", round(search.score(X_test, y_test), 3)
   </li>
   <li><strong>Early stopping</strong>: stop training when the validation score stops improving.</li>
   <li><strong>Ensembles</strong>: averaging (as in random forests) reduces variance.</li>
-  <li>In neural networks: <strong>dropout</strong>, data augmentation and weight decay (L2 by another name), all in Level 5.</li>
+  <li>In neural networks: <strong>dropout</strong>, data augmentation and weight decay (L2 by another name), all in Level 6.</li>
 </ul>
 <p>The strength of regularisation is itself a hyperparameter, found by cross-validation.</p>
 
@@ -1023,7 +1023,7 @@ for alpha in [0.001, 0.1, 10]:
       ["scikit-learn: Validation and learning curves", "https://scikit-learn.org/stable/modules/learning_curve.html", "How to plot and read learning curves."],
       ["Tibshirani (1996), Regression shrinkage and selection via the lasso, JRSS B", "https://doi.org/10.1111/j.2517-6161.1996.tb02080.x", "The lasso paper."],
       ["Google Machine Learning Crash Course: Overfitting and regularisation", "https://developers.google.com/machine-learning/crash-course", "Interactive explanations."],
-      ["Belkin et al. (2019), Reconciling modern machine-learning practice and the classical bias-variance trade-off, PNAS", "https://doi.org/10.1073/pnas.1903070116", "Double descent, a preview of Level 5."]
+      ["Belkin et al. (2019), Reconciling modern machine-learning practice and the classical bias-variance trade-off, PNAS", "https://doi.org/10.1073/pnas.1903070116", "Double descent, a preview of Level 6."]
     ]
   },
   {
@@ -1154,7 +1154,7 @@ for name, model in [("raw", raw), ("calibrated", cal)]:
 <p><strong>t-SNE</strong> and <strong>UMAP</strong> are popular for drawing 2D maps of complex data such as word embeddings or single-cell biology. They're excellent for spotting structure, but handle with care: cluster sizes and the distances between clusters on these maps often don't mean anything, and different settings can produce very different pictures.</p>
 
 <h2>Anomaly detection</h2>
-<p>Finding rare, unusual points without labels: a strange bank transaction, a failing machine's sensor readings, a network intrusion. Methods include distance-based scores, <strong>isolation forests</strong> (unusual points get isolated by random splits very quickly) and the z-scores from Level 3. Flagged anomalies usually go to a person to check.</p>
+<p>Finding rare, unusual points without labels: a strange bank transaction, a failing machine's sensor readings, a network intrusion. Methods include distance-based scores, <strong>isolation forests</strong> (unusual points get isolated by random splits very quickly) and the z-scores from Level 4. Flagged anomalies usually go to a person to check.</p>
 
 <div data-widget="py" data-title="Try it: clusters, silhouettes and PCA"><textarea>
 import numpy as np
@@ -1339,7 +1339,7 @@ for f, v in sorted(zip(X.columns, perm.importances_mean), key=lambda t: -t[1]):
 </ul>
 
 <h2>Step 5: document it</h2>
-<p><strong>Model cards</strong> (Mitchell and colleagues, 2019) are short documents shipped with a model: what it's for and not for, how it was trained and evaluated, its performance broken down by group, and its known limitations. Together with datasheets for datasets from Level 3, they make your fairness work visible and checkable.</p>
+<p><strong>Model cards</strong> (Mitchell and colleagues, 2019) are short documents shipped with a model: what it's for and not for, how it was trained and evaluated, its performance broken down by group, and its known limitations. Together with datasheets for datasets from Level 4, they make your fairness work visible and checkable.</p>
 
 <div data-widget="py" data-title="Try it: an audit by group"><textarea>
 import numpy as np
@@ -1410,7 +1410,7 @@ print(pd.DataFrame(rows).to_string(index=False))
     summary: "Everything in one workflow: frame, split by time, build a pipeline, compare models, test once, analyse errors, document.",
     minutes: 15,
     body: `
-<p>In Level 3 you explored the bike-hire data. Now you'll build the model the scheme actually wants: <strong>predict tomorrow's hires</strong>, so they can move bikes to where they'll be needed. This project strings together every lesson in this level. As before, the data is invented but shaped like real bike-sharing data, and each code box runs on its own.</p>
+<p>In Level 4 you explored the bike-hire data. Now you'll build the model the scheme actually wants: <strong>predict tomorrow's hires</strong>, so they can move bikes to where they'll be needed. This project strings together every lesson in this level. As before, the data is invented but shaped like real bike-sharing data, and each code box runs on its own.</p>
 
 <h2>Step 1: Frame it</h2>
 <ul>
@@ -1496,7 +1496,7 @@ print(test.nlargest(5, "abs_error")[["date", "temp", "rain", "holiday", "hires",
 <p>Two findings jump out. First, the average error is positive in almost every group: the boosted model under-predicts across the board by around 75 bikes, which is the growth trend it can't extrapolate. Fixes include adding a time-trend feature, or predicting the <em>change</em> from last week instead of the raw number. Second, holidays have the biggest errors, in the other direction: the model over-predicts them, because holidays are rare in the training data. That's a typical finding: errors cluster in rare situations. Options include more holiday data, a dedicated feature (such as "day before a holiday"), or telling operations to apply judgement on holidays.</p>
 
 <h2>Step 5: Document it</h2>
-<p>Finish with a short model card: purpose (planning redistribution, not pricing), data (dates, source), the time-based evaluation and test MAE versus the baseline, where it performs worst (holidays, very hot days), limitations (weather forecasts have their own errors; growth trends may change), and a plan to monitor it and retrain monthly. Level 6 covers deploying and monitoring models like this one.</p>
+<p>Finish with a short model card: purpose (planning redistribution, not pricing), data (dates, source), the time-based evaluation and test MAE versus the baseline, where it performs worst (holidays, very hot days), limitations (weather forecasts have their own errors; growth trends may change), and a plan to monitor it and retrain monthly. Level 7 covers deploying and monitoring models like this one.</p>
 
 <div class="callout"><b>Takeaway:</b> A real ML project is a chain: frame the decision, split the way you'll predict, beat a baseline with a leak-free pipeline, compare models fairly, look at the test set once, dig into where the errors are, and write it all down.</div>
 `,
@@ -1526,7 +1526,7 @@ print(test.nlargest(5, "abs_error")[["date", "temp", "rain", "holiday", "hires",
   }
 ];
 
-/* Level 4 sorting activities, added to the shared set. */
+/* Level 5 sorting activities, added to the shared set. */
 window.SORT_SETS = window.SORT_SETS || {};
 window.SORT_SETS["ml-problem-type"] = {
   title: "Try it: what kind of ML problem?",

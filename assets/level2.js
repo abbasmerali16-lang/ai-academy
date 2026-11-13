@@ -1,4 +1,4 @@
-/* Level 3 course content: Data and Python.
+/* Level 4 course content: Data and Python.
    Same shape as Level 1: id, unit, title, summary, minutes, body (HTML), terms, quiz, sources.
    All lesson text and code is original writing. Sources are credited for fact-checking and further reading.
    Code boxes: <div data-widget="py" data-title="..."><textarea>python code</textarea></div> run real Python in the page.
@@ -46,7 +46,7 @@ window.LEVEL2 = [
 <div data-widget="py" data-title="Try it: say hello"><textarea>
 # This is a comment. Python skips it.
 print("Hello, Abbas!")
-print("Welcome to Level 3.")
+print("Welcome to Level 4.")
 print(2 + 3)          # Python can do sums
 print("2 + 3")        # in quotes, it's just text
 </textarea></div>
@@ -149,7 +149,7 @@ print("2" + "2", "versus", 2 + 2)
 </textarea></div>
 
 <h2>A surprise about decimals</h2>
-<p>Try <code>print(0.1 + 0.2)</code> in the box above. You get <code>0.30000000000000004</code>. This isn't a Python bug. Computers store decimals in binary, and just as 1/3 can't be written exactly in decimal (0.333...), 0.1 can't be stored exactly in binary. The tiny difference usually doesn't matter, but it's why you should never test whether two floats are <em>exactly</em> equal, and why banks store money as whole pennies. In machine learning, models even deliberately use <em>less</em> precise numbers to save memory, which you'll see in Level 6.</p>
+<p>Try <code>print(0.1 + 0.2)</code> in the box above. You get <code>0.30000000000000004</code>. This isn't a Python bug. Computers store decimals in binary, and just as 1/3 can't be written exactly in decimal (0.333...), 0.1 can't be stored exactly in binary. The tiny difference usually doesn't matter, but it's why you should never test whether two floats are <em>exactly</em> equal, and why banks store money as whole pennies. In machine learning, models even deliberately use <em>less</em> precise numbers to save memory, which you'll see in Level 7.</p>
 
 <div class="callout"><b>Takeaway:</b> A variable is a name for a value; every value has a type (int, float, str, bool); and Python won't mix types unless you convert them yourself.</div>
 `,
@@ -338,7 +338,7 @@ for msg in ["Lunch at 1?", "URGENT winner! Click for your FREE prize!", "Free ti
     s = spam_score(msg)
     print(f"{label(s):4}  score {s:.2f}  {msg}")
 </textarea></div>
-<p>Try changing the threshold to <code>0.3</code> in the call to <code>label()</code>, or add your own message. This hand-written rule is the opposite of machine learning: a person chose the warning words. In Level 4 you'll let a model learn them from examples.</p>
+<p>Try changing the threshold to <code>0.3</code> in the call to <code>label()</code>, or add your own message. This hand-written rule is the opposite of machine learning: a person chose the warning words. In Level 5 you'll let a model learn them from examples.</p>
 
 <h2>Reading error messages</h2>
 <p>When something goes wrong, Python prints a <strong>traceback</strong>: the trail of steps that led to the problem, ending with the error type and message. The most common ones:</p>
@@ -1057,7 +1057,7 @@ ax.set_title("Monthly active users")
 ax.set_ylabel("Users")
 ax.set_ylim(bottom=0)        # honest: start the axis at zero
 plt.show()</code></pre>
-<p>Run code like this in Google Colab and the chart appears beneath it. The code boxes on this site show text output only, so here the code is for reading; you'll draw real charts in the Level 3 project if you use Colab.</p>
+<p>Run code like this in Google Colab and the chart appears beneath it. The code boxes on this site show text output only, so here the code is for reading; you'll draw real charts in the Level 4 project if you use Colab.</p>
 
 <h2>Good chart checklist</h2>
 <ul>
@@ -1116,7 +1116,7 @@ plt.show()</code></pre>
 <p>With three numbers you get 3D space. With 1,000 numbers you get 1,000-dimensional space. No one can picture that, but the maths works exactly the same, and that's where AI lives.</p>
 
 <h2>Embeddings: meaning as direction</h2>
-<p>In Level 1 you learned that language models turn words into lists of numbers. Those lists are vectors called <strong>embeddings</strong>, and they're arranged so that words with similar meanings point in similar directions. "Cat" and "kitten" point nearly the same way; "cat" and "tax return" don't. The same trick works for sentences, images, songs and products, and it powers search engines, recommendations and the retrieval systems you'll build in Level 6.</p>
+<p>In Level 1 you learned that language models turn words into lists of numbers. Those lists are vectors called <strong>embeddings</strong>, and they're arranged so that words with similar meanings point in similar directions. "Cat" and "kitten" point nearly the same way; "cat" and "tax return" don't. The same trick works for sentences, images, songs and products, and it powers search engines, recommendations and the retrieval systems you'll build in Level 7.</p>
 
 <h2>The dot product: how aligned are two vectors?</h2>
 <p>The <strong>dot product</strong> multiplies two vectors item by item and adds up the results: [1, 2, 3] · [4, 5, 6] = 1×4 + 2×5 + 3×6 = 32. It's large when the vectors point the same way, zero when they're at right angles, and negative when they point in opposite directions.</p>
@@ -1223,7 +1223,7 @@ print(out.round(2))
 <p>Try a learning rate of 0.2, then 0.9, then 1.05. A small rate creeps steadily down; a rate near 1 zig-zags across the valley; just above 1 the steps grow until the ball flies off. Real training runs fail in exactly these ways.</p>
 
 <h2>The chain rule: blame passed backwards</h2>
-<p>A neural network is functions inside functions: layer after layer. The <strong>chain rule</strong> says the slope of a chain of functions is the product of each link's slope. That lets the error at the output be traced backwards through every layer to work out how much each weight was to blame. This procedure is called <strong>backpropagation</strong>, and it's how every neural network is trained. You'll build it step by step in Level 5.</p>
+<p>A neural network is functions inside functions: layer after layer. The <strong>chain rule</strong> says the slope of a chain of functions is the product of each link's slope. That lets the error at the output be traced backwards through every layer to work out how much each weight was to blame. This procedure is called <strong>backpropagation</strong>, and it's how every neural network is trained. You'll build it step by step in Level 6.</p>
 
 <div data-widget="py" data-title="Try it: gradient descent in eight lines"><textarea>
 # Find the x that makes the loss (x - 3)**2 + 1 as small as possible.
@@ -1436,7 +1436,7 @@ print(df.corr(numeric_only=True)["hires"].round(2))
   <li><strong>What you found</strong>, with numbers: for example, "warm days average roughly twice as many hires as cold days; rainy days average about 250 fewer; temperature has a strong positive correlation with hires".</li>
   <li><strong>Limitations</strong>: correlation isn't causation; 120 days is a small sample from one invented city; other factors such as holidays or events weren't recorded.</li>
 </ol>
-<p>Your findings also suggest what a model should use. Temperature and rain look strongly informative, which makes them good candidate <strong>features</strong> for the bike-demand prediction model you'll build in Level 4. The weekend difference is small here (about 25 hires, with a correlation near zero) and could easily be noise, which is a finding too: it tells you not to make claims about weekends from this data.</p>
+<p>Your findings also suggest what a model should use. Temperature and rain look strongly informative, which makes them good candidate <strong>features</strong> for the bike-demand prediction model you'll build in Level 5. The weekend difference is small here (about 25 hires, with a correlation near zero) and could easily be noise, which is a finding too: it tells you not to make claims about weekends from this data.</p>
 
 <h2>Going further</h2>
 <p>To do this on real data, open Google Colab and try one of these: Kaggle's datasets, the UCI Machine Learning Repository, or official open data from your own government. Add charts with matplotlib: a histogram of hires, a scatter plot of temperature against hires, and a bar chart comparing rainy and dry days. That's a genuine portfolio piece.</p>
@@ -1469,7 +1469,7 @@ print(df.corr(numeric_only=True)["hires"].round(2))
   }
 ];
 
-/* Level 3 sorting activities, added to the shared set. */
+/* Level 4 sorting activities, added to the shared set. */
 window.SORT_SETS = window.SORT_SETS || {};
 window.SORT_SETS["chart-choice"] = {
   title: "Try it: pick the best chart",
