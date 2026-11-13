@@ -325,6 +325,7 @@
     function finish() {
       var passed = correct >= passMark(l);
       var prev = progress[l.id] || {};
+      if (passed && !prev.passed && typeof logDay === "function") logDay("l");
       progress[l.id] = { passed: passed || !!prev.passed, best: Math.max(correct, prev.best || 0) };
       save(progress);
       if (passed) celebrate();
@@ -1203,7 +1204,7 @@
   }
 
   var page = document.body.dataset.page;
-  if (page === "glossary" || page === "home" || page === "lessons") setLevel(pickLevel());
+  if (page === "glossary" || page === "home" || page === "lessons" || page === "review" || page === "me") setLevel(pickLevel());
   if (page === "home" || page === "lessons") renderHome();
   else if (page === "lesson") renderLesson();
   else if (page === "glossary") renderGlossary();
@@ -1236,7 +1237,9 @@
     var curId = page === "lesson" ? (currentLessonId() || ALL[0].id) : null;
     var html = '<nav class="nav-tab" aria-label="Course menu">' +
       '<a class="nav-top' + (page === "home" ? " here" : "") + '" href="' + levelHref(LV.n) + '">Home</a>' +
-      '<a class="nav-top' + (page === "glossary" ? " here" : "") + '" href="glossary.html">Glossary</a>';
+      '<a class="nav-top' + (page === "glossary" ? " here" : "") + '" href="glossary.html">Glossary</a>' +
+      '<a class="nav-top' + (page === "review" ? " here" : "") + '" href="review.html">Review</a>' +
+      '<a class="nav-top' + (page === "me" ? " here" : "") + '" href="me.html">My learning</a>';
     LEVELS.forEach(function (m) {
       if (!m.ready) { html += '<p class="nav-level nav-locked">Level ' + m.n + " · " + esc(m.name) + " · coming soon</p>"; return; }
       var md = m.lessons.filter(function (l) { return isDone(l.id); }).length;
@@ -1280,8 +1283,12 @@
       '<div class="tn-item tn-mega"><button class="tn-btn' + (page === "lesson" || page === "lessons" ? " active" : "") + '" type="button" aria-expanded="false">Lessons</button>' +
         '<div class="dd dd-mega"><div class="dd-top"><span>Level ' + LV.n + ": " + esc(LV.name) + '</span><a href="' + lessonsHref(LV.n) + '">See all on one page →</a></div><div class="dd-cols">' + units + "</div></div></div>" +
       '<a class="tn-link' + (page === "glossary" ? " active" : "") + '" href="glossary.html">Glossary</a>' +
+      '<a class="tn-link' + (page === "review" ? " active" : "") + '" href="review.html">Review</a>' +
+      '<a class="tn-link' + (page === "me" ? " active" : "") + '" href="me.html">My learning</a>' +
+      displayMenu() +
       // The level badge only shows inside a level (a lesson or that level's lesson list).
       (page === "lesson" || page === "lessons" ? '<a class="tn-pill" href="' + lessonsHref(LV.n) + '" title="Your progress in Level ' + LV.n + '">Level ' + LV.n + " · " + n + "/" + t + "</a>" : "");
+    wireDisplay(nav);
     var items = nav.querySelectorAll(".tn-item");
     function closeAll(except) { items.forEach(function (it) { if (it !== except) { it.classList.remove("open"); it.querySelector(".tn-btn").setAttribute("aria-expanded", "false"); } }); }
     items.forEach(function (it) {
@@ -1352,8 +1359,381 @@
       }
     }
   }
+  /* =====================================================================
+     Extras: review, level tests and certificates, streak and daily goal,
+     lesson notes, save codes, and comfort settings (text size, dark mode,
+     read aloud). Everything is saved in this browser only.
+     ===================================================================== */
+  var EX_KEY = "aiAcademy.extras.v1", PREF_KEY = "aiAcademy.prefs.v1";
+  function loadKey(k) { try { return JSON.parse(localStorage.getItem(k)) || {}; } catch (e) { return {}; } }
+  function saveKey(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage blocked */ } }
+  var extras = loadKey(EX_KEY);
+  ["days", "notes", "cards", "tests"].forEach(function (k) { if (!extras[k] || typeof extras[k] !== "object") extras[k] = {}; });
+  if (!extras.goal) extras.goal = 1;
+  function saveExtras() { saveKey(EX_KEY, extras); }
+
+  function heroToBand() {
+    document.querySelectorAll(".page-band").forEach(function (b) { b.remove(); });
+    var hero = document.querySelector("main .hero");
+    if (hero) { pageBand([hero.querySelector(".eyebrow"), hero.querySelector("h1"), hero.querySelector(".lead")]); hero.remove(); }
+  }
+  function dayKey(d) { d = d || new Date(); return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
+  function addDays(n) { var d = new Date(); d.setDate(d.getDate() + n); return dayKey(d); }
+  function logDay(kind) {
+    var k = dayKey(), d = extras.days[k] || { l: 0, r: 0 };
+    d[kind] = (d[kind] || 0) + 1; extras.days[k] = d; saveExtras();
+  }
+  function streak() {
+    var n = 0, i = extras.days[dayKey()] ? 0 : -1;
+    while (extras.days[addDays(i - n)]) n++;
+    return n;
+  }
+  function todayLessons() { var d = extras.days[dayKey()]; return d ? d.l || 0 : 0; }
+
+  /* ---------- comfort settings: text size and dark mode ---------- */
+  var prefs = loadKey(PREF_KEY);
+  function applyPrefs() {
+    var r = document.documentElement;
+    r.classList.toggle("fs-s", prefs.size === "s");
+    r.classList.toggle("fs-l", prefs.size === "l");
+    r.classList.toggle("fs-xl", prefs.size === "xl");
+    r.classList.toggle("dark", !!prefs.dark);
+  }
+  applyPrefs();
+  function displayMenu() {
+    var sizes = [["s", "Smaller"], ["", "Normal"], ["l", "Larger"], ["xl", "Largest"]];
+    return '<div class="tn-item tn-display"><button class="tn-btn" type="button" aria-expanded="false" aria-label="Display settings">Aa</button>' +
+      '<div class="dd dd-display"><p class="dd-head">Text size</p><div class="seg">' + sizes.map(function (s) {
+        return '<button type="button" data-size="' + s[0] + '" class="' + ((prefs.size || "") === s[0] ? "on" : "") + '">' + s[1] + "</button>";
+      }).join("") + '</div><p class="dd-head">Colours</p><div class="seg">' +
+      '<button type="button" data-dark="0" class="' + (prefs.dark ? "" : "on") + '">Light</button><button type="button" data-dark="1" class="' + (prefs.dark ? "on" : "") + '">Dark</button></div></div></div>';
+  }
+  function wireDisplay(root) {
+    root.querySelectorAll("[data-size]").forEach(function (b) {
+      b.onclick = function (e) { e.stopPropagation(); prefs.size = b.dataset.size; saveKey(PREF_KEY, prefs); applyPrefs(); root.querySelectorAll("[data-size]").forEach(function (x) { x.classList.toggle("on", x === b); }); if (typeof fitTitles === "function") fitTitles(); };
+    });
+    root.querySelectorAll("[data-dark]").forEach(function (b) {
+      b.onclick = function (e) { e.stopPropagation(); prefs.dark = b.dataset.dark === "1"; saveKey(PREF_KEY, prefs); applyPrefs(); root.querySelectorAll("[data-dark]").forEach(function (x) { x.classList.toggle("on", x === b); }); };
+    });
+  }
+
+  /* ---------- review: practise key terms from lessons you've finished ---------- */
+  var GAPS = [0, 1, 2, 4, 8, 16];
+  function cardKey(lessonId, term) { return lessonId + "|" + term; }
+  function termPool(scope) {
+    var lessons = scope === "done" ? ALL.filter(function (l) { return isDone(l.id); }) : (LEVELS[scope - 1] || LV).lessons;
+    var pool = [];
+    lessons.forEach(function (l) { l.terms.forEach(function (t) { pool.push({ l: l, term: t[0], def: t[1], key: cardKey(l.id, t[0]) }); }); });
+    return pool;
+  }
+  function dueCount() {
+    var today = dayKey();
+    return termPool("done").filter(function (c) { var s = extras.cards[c.key]; return !s || s.due <= today; }).length;
+  }
+  function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+
+  /* One question at a time, with a bar showing how far through you are. */
+  function runQuestions(box, items, opts) {
+    var i = 0, right = 0, again = [];
+    function show() {
+      var item = items[i];
+      box.innerHTML = '<div class="rv-top"><span>' + opts.label + " " + (i + 1) + " of " + items.length + '</span><span>' + right + ' right so far</span></div>' +
+        '<div class="bar"><span style="width:' + Math.round(100 * i / items.length) + '%"></span></div>' +
+        '<div class="q rv-q"><p class="rv-ask">' + item.ask + "</p>" + (item.from ? '<p class="rv-from">' + item.from + "</p>" : "") + '<div class="rv-opts"></div><div class="rv-after"></div></div>';
+      var wrap = box.querySelector(".rv-opts");
+      item.options.forEach(function (o, oi) {
+        var b = document.createElement("button");
+        b.type = "button"; b.className = "opt"; b.textContent = o;
+        b.onclick = function () {
+          var all = wrap.querySelectorAll(".opt"); all.forEach(function (x) { x.disabled = true; });
+          all[item.answer].classList.add("right");
+          var ok = oi === item.answer;
+          if (ok) right++; else { b.classList.add("wrong"); again.push(item); }
+          if (opts.onAnswer) opts.onAnswer(item, ok);
+          var after = box.querySelector(".rv-after");
+          after.innerHTML = '<div class="explain">' + (ok ? "Correct, Abbas. " : "Not quite, Abbas. ") + esc(item.explain || "") + '</div><button class="btn" type="button">' + (i + 1 < items.length ? "Next question →" : "See my result") + "</button>";
+          var nb = after.querySelector(".btn"); nb.focus();
+          nb.onclick = function () { i++; if (i < items.length) show(); else opts.done(right, items.length, again); };
+        };
+        wrap.appendChild(b);
+      });
+    }
+    show();
+  }
+
+  function renderReview() {
+    var main = $("#main"), test = parseInt(new URLSearchParams(location.search).get("test"), 10);
+    if (test && LEVELS[test - 1] && LEVELS[test - 1].ready) return renderTest(LEVELS[test - 1]);
+    var done = ALL.filter(function (l) { return isDone(l.id); }).length;
+    var scope = done ? "done" : LV.n;
+    function intro() {
+      var pool = termPool(scope), today = dayKey();
+      var due = pool.filter(function (c) { var s = extras.cards[c.key]; return !s || s.due <= today; });
+      var learnt = pool.filter(function (c) { var s = extras.cards[c.key]; return s && s.box >= 4; }).length;
+      main.innerHTML =
+        '<section class="hero"><span class="eyebrow">Practise</span><h1>Review what you’ve learned</h1>' +
+        '<p class="lead">Abbas, short practice rounds help lessons stick. Each round asks you to match 10 key terms to their meaning. Terms you get wrong come back sooner; ones you know well come back less often.</p></section>' +
+        '<div class="rv-panel"><div class="rv-choose"><span>Practise terms from:</span>' +
+        '<button type="button" data-scope="done" class="' + (scope === "done" ? "on" : "") + '"' + (done ? "" : " disabled") + ">Lessons I’ve finished (" + done + ")</button>" +
+        READY.map(function (m) { return '<button type="button" data-scope="' + m.n + '" class="' + (scope === m.n ? "on" : "") + '">Level ' + m.n + "</button>"; }).join("") + "</div>" +
+        (done ? "" : '<p class="rv-note"><em>You haven’t finished a lesson yet, so this round uses Level ' + LV.n + ' terms. Once you pass a lesson quiz, its terms are added to your review.</em></p>') +
+        '<dl class="stats rv-stats"><div><dt>' + pool.length + "</dt><dd>terms in this set</dd></div><div><dt>" + due.length + "</dt><dd>due today</dd></div><div><dt>" + learnt + "</dt><dd>known well</dd></div></dl>" +
+        '<p class="rv-go"><button class="btn" type="button" id="rv-start"' + (pool.length < 4 ? " disabled" : "") + ">Start a 10-question round</button></p></div>" +
+        '<div id="rv-box"></div>';
+      main.querySelectorAll("[data-scope]").forEach(function (b) {
+        b.onclick = function () { scope = b.dataset.scope === "done" ? "done" : +b.dataset.scope; intro(); };
+      });
+      $("#rv-start").onclick = function () { start(pool, due); };
+      heroToBand(); fitTitles();
+    }
+    function start(pool, due) {
+      var picks = shuffle(due).concat(shuffle(pool.filter(function (c) { return due.indexOf(c) < 0; }))).slice(0, 10);
+      var everyDef = allTerms();
+      var items = shuffle(picks).map(function (c) {
+        // Wrong answers come from the same level, so they are not too easy to rule out.
+        var near = everyDef.filter(function (t) { return t.lesson.level === c.l.level && t.term !== c.term && t.def !== c.def; });
+        var wrong = shuffle(near).slice(0, 3).map(function (t) { return t.def; });
+        var options = shuffle(wrong.concat([c.def]));
+        return { card: c, ask: "What does <strong>" + esc(c.term) + "</strong> mean?", from: "From " + (c.l.level > 1 ? "Level " + c.l.level + ", lesson " + c.l.num : "Lesson " + c.l.num) + ": " + esc(c.l.title), options: options, answer: options.indexOf(c.def), explain: c.term + ": " + c.def };
+      });
+      var box = $("#rv-box");
+      main.querySelector(".rv-panel").hidden = true;
+      runQuestions(box, items, {
+        label: "Question",
+        onAnswer: function (item, ok) {
+          var s = extras.cards[item.card.key] || { box: 0 };
+          s.box = ok ? Math.min(5, (s.box || 0) + 1) : 1;
+          s.due = addDays(ok ? GAPS[s.box] : 0);
+          extras.cards[item.card.key] = s; saveExtras();
+        },
+        done: function (right, total, again) {
+          logDay("r");
+          if (right / total >= 0.8) celebrate();
+          box.innerHTML = '<div class="result ' + (right / total >= 0.6 ? "pass" : "fail") + '">Abbas, you got ' + right + " of " + total + " right. " +
+            (right === total ? "Perfect round." : right / total >= 0.8 ? "Great work." : "Those you missed will come back soon, so they’ll stick.") + "</div>" +
+            (again.length ? '<h2>Worth another look</h2><ul class="terms">' + again.map(function (x) { return "<li><dfn>" + esc(x.card.term) + "</dfn>: " + esc(x.card.def) + ' <a href="' + lessonHref(x.card.l.id) + '">Open the lesson</a></li>'; }).join("") + "</ul>" : "") +
+            '<p class="rv-go"><button class="btn" type="button" id="rv-again">Another round</button> <a class="btn secondary" href="' + levelHref(LV.n) + '">Back to home</a></p>';
+          $("#rv-again").onclick = intro;
+          window.scrollTo(0, 0);
+        }
+      });
+      window.scrollTo(0, 0);
+    }
+    intro();
+  }
+
+  /* ---------- level test and certificate ---------- */
+  var TEST_LEN = 20, TEST_PASS = 0.8;
+  function certHTML(m, t) {
+    var date = new Date(t.date + "T12:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+    return '<div class="certificate-card" id="cert-' + m.n + '"><p class="cc-top">Abbas’ AI Academy</p><p class="cc-small">This certifies that</p><p class="cc-name">Abbas</p>' +
+      '<p class="cc-small">has completed</p><p class="cc-level">Level ' + m.n + ": " + esc(m.name) + "</p>" +
+      '<p class="cc-small">passing the level test with ' + t.best + " out of " + TEST_LEN + "</p><p class=\"cc-date\">" + date + "</p></div>" +
+      '<p class="rv-go"><button class="btn" type="button" data-print="' + m.n + '">Print or save as PDF</button></p>';
+  }
+  function wirePrint(root) {
+    root.querySelectorAll("[data-print]").forEach(function (b) {
+      b.onclick = function () {
+        var c = document.getElementById("cert-" + b.dataset.print);
+        document.querySelectorAll(".certificate-card").forEach(function (x) { x.classList.toggle("print-me", x === c); });
+        document.body.classList.add("printing-cert");
+        window.print();
+        setTimeout(function () { document.body.classList.remove("printing-cert"); }, 500);
+      };
+    });
+  }
+  function renderTest(m) {
+    setLevel(m);
+    var main = $("#main");
+    var bank = [];
+    m.lessons.forEach(function (l) { l.quiz.forEach(function (q) { bank.push({ q: q, l: l }); }); });
+    function intro() {
+      var t = extras.tests[m.n];
+      document.title = "Level " + m.n + " test · Abbas’ AI Academy";
+      main.innerHTML = '<section class="hero"><span class="eyebrow">Level ' + m.n + " · " + esc(m.name) + '</span><h1>Level ' + m.n + ' test</h1>' +
+        '<p class="lead">Abbas, this test mixes ' + TEST_LEN + " questions from all " + m.lessons.length + " lessons in Level " + m.n + ". Get " + Math.ceil(TEST_LEN * TEST_PASS) + " or more right to earn your certificate. You can take it as many times as you like.</p></section>" +
+        (t && t.passed ? '<h2>Your certificate</h2>' + certHTML(m, t) : "") +
+        '<div class="rv-panel"><dl class="stats rv-stats"><div><dt>' + TEST_LEN + "</dt><dd>questions</dd></div><div><dt>" + Math.ceil(TEST_LEN * TEST_PASS) + "</dt><dd>needed to pass</dd></div><div><dt>" + (t ? t.best + "/" + TEST_LEN : "–") + "</dt><dd>your best score</dd></div></dl>" +
+        '<p class="rv-go"><button class="btn" type="button" id="test-start">' + (t ? "Take the test again" : "Start the test") + "</button></p></div><div id=\"rv-box\"></div>";
+      wirePrint(main);
+      $("#test-start").onclick = start;
+      heroToBand(); fitTitles();
+    }
+    function start() {
+      var items = shuffle(bank).slice(0, TEST_LEN).map(function (x) {
+        return { ask: esc(x.q.q), from: "From lesson " + x.l.num + ": " + esc(x.l.title), options: x.q.options, answer: x.q.answer, explain: x.q.explain };
+      });
+      main.querySelector(".rv-panel").hidden = true;
+      main.querySelectorAll(".certificate-card, .certificate-card + .rv-go, main > h2").forEach(function (x) { x.hidden = true; });
+      var box = $("#rv-box");
+      runQuestions(box, items, {
+        label: "Question",
+        done: function (right, total) {
+          var passed = right >= Math.ceil(total * TEST_PASS);
+          var prev = extras.tests[m.n] || {};
+          var rec = { best: Math.max(right, prev.best || 0), passed: passed || !!prev.passed, date: passed && !prev.passed ? dayKey() : (prev.date || dayKey()) };
+          extras.tests[m.n] = rec; saveExtras(); logDay("r");
+          if (passed) celebrate();
+          box.innerHTML = '<div class="result ' + (passed ? "pass" : "fail") + '">Abbas, you scored ' + right + " out of " + total + ". " +
+            (passed ? "You passed the Level " + m.n + " test. Here is your certificate." : "You need " + Math.ceil(total * TEST_PASS) + " to pass. Review the lessons you’re unsure of and try again.") + "</div>" +
+            (rec.passed ? certHTML(m, rec) : "") +
+            '<p class="rv-go"><button class="btn secondary" type="button" id="test-again">Back to the test page</button> <a class="btn secondary" href="review.html">Practise key terms</a></p>';
+          wirePrint(box);
+          $("#test-again").onclick = intro;
+          window.scrollTo(0, 0);
+        }
+      });
+      window.scrollTo(0, 0);
+    }
+    intro();
+  }
+
+  /* ---------- save codes: move progress to another device ---------- */
+  function makeCode() {
+    var json = JSON.stringify({ p: progress, x: extras });
+    return "AIA1-" + btoa(unescape(encodeURIComponent(json)));
+  }
+  function readCode(code) {
+    code = String(code || "").trim().replace(/\s+/g, "");
+    if (code.indexOf("AIA1-") !== 0) throw new Error("bad");
+    var data = JSON.parse(decodeURIComponent(escape(atob(code.slice(5)))));
+    if (!data || typeof data.p !== "object") throw new Error("bad");
+    return data;
+  }
+
+  /* ---------- My learning page ---------- */
+  function renderMe() {
+    var main = $("#main");
+    var s = streak(), tl = todayLessons();
+    var days = []; for (var i = -13; i <= 0; i++) days.push(addDays(i));
+    var noted = ALL.filter(function (l) { return extras.notes[l.id] && extras.notes[l.id].trim(); });
+    var certs = READY.filter(function (m) { return extras.tests[m.n] && extras.tests[m.n].passed; });
+    var totalDone = ALL.filter(function (l) { return isDone(l.id); }).length;
+    main.innerHTML =
+      '<section class="hero"><span class="eyebrow">Your space</span><h1>My learning</h1><p class="lead">Abbas, here is your streak, your notes, your certificates and a way to carry your progress to another device.</p></section>' +
+      '<nav class="jump" aria-label="On this page"><a href="#streak">Streak</a><a href="#notes">My notes</a><a href="#certs">Certificates</a><a href="#move">Move my progress</a></nav>' +
+      '<section id="streak"><span class="kicker">Keep going</span><h2>Your streak and daily goal</h2>' +
+      '<dl class="stats rv-stats"><div><dt>' + s + "</dt><dd>day streak</dd></div><div><dt>" + tl + " / " + extras.goal + "</dt><dd>lessons today</dd></div><div><dt>" + totalDone + "</dt><dd>lessons done in total</dd></div></dl>" +
+      '<div class="day-row" aria-label="The last 14 days">' + days.map(function (d) {
+        var on = extras.days[d], lbl = new Date(d + "T12:00:00").toLocaleDateString("en-GB", { weekday: "short", day: "numeric" });
+        return '<span class="day' + (on ? " on" : "") + (d === dayKey() ? " today" : "") + '" title="' + lbl + (on ? ": you learned something" : "") + '"><b>' + lbl.split(" ")[0].slice(0, 2) + "</b>" + lbl.split(" ")[1] + "</span>";
+      }).join("") + "</div>" +
+      '<p class="rv-note"><em>A day counts towards your streak when you pass a lesson quiz or finish a review round.</em></p>' +
+      '<div class="rv-choose"><span>My daily goal:</span>' + [1, 2, 3].map(function (g) { return '<button type="button" data-goal="' + g + '" class="' + (extras.goal === g ? "on" : "") + '">' + g + " lesson" + (g > 1 ? "s" : "") + " a day</button>"; }).join("") + "</div></section>" +
+      '<section id="notes"><span class="kicker">Your words</span><h2>My notes</h2>' +
+      (noted.length ? '<ul class="notes-list">' + noted.map(function (l) {
+        return '<li><a href="' + lessonHref(l.id) + '#my-notes"><span class="nl-tag">' + (l.level > 1 ? "Level " + l.level + ", lesson " + l.num : "Lesson " + l.num) + "</span><strong>" + esc(l.title) + '</strong></a><p>' + esc(extras.notes[l.id]).replace(/\n/g, "<br>") + "</p></li>";
+      }).join("") + "</ul>" : '<p class="rv-note"><em>No notes yet. Every lesson has a "My notes" box just above the quiz; anything you type there appears here.</em></p>') + "</section>" +
+      '<section id="certs"><span class="kicker">Proof of your progress</span><h2>Certificates</h2>' +
+      (certs.length ? certs.map(function (m) { return certHTML(m, extras.tests[m.n]); }).join("") : '<p class="rv-note"><em>Pass a level test to earn a certificate.</em></p>') +
+      '<ul class="test-links">' + READY.map(function (m) { var t = extras.tests[m.n]; return '<li><a href="review.html?test=' + m.n + '">Level ' + m.n + " test: " + esc(m.name) + "</a><span>" + (t ? (t.passed ? "Passed, best " : "Best ") + t.best + "/" + TEST_LEN : "Not taken yet") + "</span></li>"; }).join("") + "</ul></section>" +
+      '<section id="move"><span class="kicker">Laptop, phone, tablet</span><h2>Move my progress</h2>' +
+      '<p>Your progress is saved in this browser only. To carry it to another device, copy your save code here, send it to yourself (for example by email), then paste it on the other device.</p>' +
+      '<div class="move-grid"><div><h3>1. Copy my code</h3><textarea id="code-out" readonly rows="4" aria-label="Your save code"></textarea><p><button class="btn" type="button" id="code-copy">Copy code</button> <span class="code-msg" id="copy-msg"></span></p></div>' +
+      '<div><h3>2. Paste a code here</h3><textarea id="code-in" rows="4" aria-label="Paste a save code" placeholder="Paste a code that starts with AIA1-"></textarea><p><button class="btn secondary" type="button" id="code-load">Load this code</button> <span class="code-msg" id="load-msg"></span></p></div></div>' +
+      '<p style="margin-top:28px"><button class="btn secondary" type="button" id="reset-all">Reset all my progress</button></p></section>';
+    $("#code-out").value = makeCode();
+    $("#code-copy").onclick = function () {
+      var t = $("#code-out"); t.select();
+      var ok = function () { $("#copy-msg").textContent = "Copied."; };
+      if (navigator.clipboard) navigator.clipboard.writeText(t.value).then(ok, function () { document.execCommand("copy"); ok(); }); else { document.execCommand("copy"); ok(); }
+    };
+    $("#code-load").onclick = function () {
+      try {
+        var d = readCode($("#code-in").value);
+        if (!confirm("Abbas, replace the progress in this browser with the progress from this code?")) return;
+        progress = d.p; save(progress);
+        if (d.x) { extras = d.x; saveExtras(); }
+        $("#load-msg").textContent = "Loaded. Refreshing…";
+        setTimeout(function () { location.reload(); }, 600);
+      } catch (e) { $("#load-msg").textContent = "That code didn’t work. Check you copied all of it."; }
+    };
+    $("#reset-all").onclick = function () {
+      if (confirm("Abbas, reset all your progress, notes, streak and test scores in this browser?")) { progress = {}; save(progress); extras = { days: {}, notes: {}, cards: {}, tests: {}, goal: 1 }; saveExtras(); location.reload(); }
+    };
+    main.querySelectorAll("[data-goal]").forEach(function (b) { b.onclick = function () { extras.goal = +b.dataset.goal; saveExtras(); renderMe(); fitTitles(); location.hash = "streak"; }; });
+    wirePrint(main);
+    heroToBand();
+  }
+
+  /* ---------- lesson page: notes box and read aloud ---------- */
+  function lessonExtras() {
+    var l = lessonById(currentLessonId()) || ALL[0];
+    var quiz = $("#quiz");
+    if (quiz) {
+      quiz.insertAdjacentHTML("beforebegin", '<section class="my-notes" id="my-notes"><h2>My notes</h2><p class="rv-note"><em>Jot down anything you want to remember, Abbas. Notes save as you type and are collected on your <a href="me.html#notes">My learning</a> page.</em></p>' +
+        '<textarea id="note-box" rows="5" aria-label="My notes for this lesson" placeholder="Type your notes here…"></textarea><p class="code-msg" id="note-msg"></p></section>');
+      var box = $("#note-box"), msg = $("#note-msg"), tm;
+      box.value = extras.notes[l.id] || "";
+      box.addEventListener("input", function () {
+        clearTimeout(tm); msg.textContent = "Saving…";
+        tm = setTimeout(function () { extras.notes[l.id] = box.value; if (!box.value.trim()) delete extras.notes[l.id]; saveExtras(); msg.textContent = "Saved."; }, 400);
+      });
+    }
+    // Read aloud, one paragraph at a time, using the browser's built-in voice.
+    var il = document.querySelector(".in-lesson .il-head");
+    if (!il || !("speechSynthesis" in window)) return;
+    il.insertAdjacentHTML("afterend", '<div class="read-aloud"><button class="btn secondary" type="button" id="ra-play">Read this lesson aloud</button><button class="btn secondary" type="button" id="ra-stop" hidden>Stop</button></div>');
+    var play = $("#ra-play"), stop = $("#ra-stop"), synth = window.speechSynthesis, state = "idle", parts = [], at = 0;
+    function voice() {
+      var vs = synth.getVoices();
+      return vs.find(function (v) { return /en-GB/i.test(v.lang); }) || vs.find(function (v) { return /^en/i.test(v.lang); });
+    }
+    function mark(el) { document.querySelectorAll(".reading-now").forEach(function (x) { x.classList.remove("reading-now"); }); if (el) { el.classList.add("reading-now"); el.scrollIntoView({ block: "center", behavior: "smooth" }); } }
+    function speakNext() {
+      if (at >= parts.length) return finish();
+      var el = parts[at], u = new SpeechSynthesisUtterance(el.textContent.replace(/\s+/g, " ").trim());
+      var v = voice(); if (v) u.voice = v;
+      u.rate = 0.95;
+      u.onend = function () { if (state === "playing") { at++; speakNext(); } };
+      mark(el); synth.speak(u);
+    }
+    function finish() { synth.cancel(); state = "idle"; at = 0; mark(null); play.textContent = "Read this lesson aloud"; stop.hidden = true; }
+    play.onclick = function () {
+      if (state === "idle") {
+        var top = document.querySelector(".page-band h1"), lead = document.querySelector(".page-band .lead");
+        parts = [top, lead].filter(Boolean).concat(Array.prototype.filter.call(document.querySelectorAll("#lesson > h2, #lesson > p, #lesson > ul > li, #lesson > ol > li, #lesson > .callout"), function (el) {
+          return !el.closest(".quiz, .sources, .my-notes, .in-lesson") && el.textContent.trim();
+        }));
+        state = "playing"; at = 0; play.textContent = "Pause"; stop.hidden = false; speakNext();
+      } else if (state === "playing") { state = "paused"; synth.pause(); play.textContent = "Resume"; }
+      else { state = "playing"; synth.resume(); play.textContent = "Pause"; }
+    };
+    stop.onclick = finish;
+    window.addEventListener("beforeunload", function () { synth.cancel(); });
+  }
+
+  /* ---------- home page: streak line ---------- */
+  function homeExtras() {
+    var paths = $("#paths");
+    if (!paths) return;
+    var s = streak(), tl = todayLessons(), due = dueCount(), anyDone = ALL.some(function (l) { return isDone(l.id); });
+    paths.insertAdjacentHTML("beforebegin", '<div class="streak-strip">' +
+      '<div><span class="ss-big">' + s + '</span><span>day streak</span></div>' +
+      '<div><span class="ss-big">' + tl + " / " + extras.goal + '</span><span>today’s goal (lessons)</span></div>' +
+      '<div><span class="ss-big">' + (anyDone ? due : "–") + '</span><span>' + (anyDone ? "terms due for review" : "review opens after your first lesson") + "</span></div>" +
+      '<div class="ss-links"><a class="btn" href="review.html">Review now</a><a class="btn secondary" href="me.html">My learning</a></div></div>');
+  }
+
+  /* ---------- lessons page: level test box ---------- */
+  function lessonsExtras() {
+    var road = $("#road");
+    if (!road) return;
+    var t = extras.tests[LV.n];
+    road.insertAdjacentHTML("beforebegin", '<section id="level-test" class="cta-band test-band"><span class="kicker">Level ' + LV.n + ' test</span><h2>Ready to prove it, Abbas?</h2>' +
+      "<p>" + TEST_LEN + " questions from across all " + LESSONS.length + " lessons. Get " + Math.ceil(TEST_LEN * TEST_PASS) + " right to earn your Level " + LV.n + " certificate." + (t ? " Your best so far: " + t.best + "/" + TEST_LEN + (t.passed ? ", passed." : ".") : "") + "</p>" +
+      '<a class="btn" href="review.html?test=' + LV.n + '">' + (t && t.passed ? "See my certificate" : "Take the Level " + LV.n + " test") + "</a></section>");
+  }
+
   buildTopNav();
   buildInline();
+  if (page === "review") renderReview();
+  else if (page === "me") renderMe();
+  else if (page === "lesson") lessonExtras();
+  else if (page === "home") homeExtras();
+  else if (page === "lessons") lessonsExtras();
+
+
 
   /* Footer with grouped, clearly labelled links (same on every page). */
   function buildFooter() {
@@ -1362,7 +1742,7 @@
     var next = nextAll();
     f.innerHTML = '<div class="foot-grid">' +
       '<div class="foot-brand"><p class="foot-name">Abbas’ AI Academy</p><p>Your path from AI beginner to master, one short lesson at a time.</p><p class="foot-note">Your progress is saved in this browser only.</p></div>' +
-      '<div><p class="foot-head">Learn</p><ul><li><a href="' + levelHref(LV.n) + '">Home</a></li><li><a href="' + lessonsHref(LV.n) + '">All Level ' + LV.n + ' lessons</a></li><li><a href="glossary.html">Glossary</a></li>' +
+      '<div><p class="foot-head">Learn</p><ul><li><a href="' + levelHref(LV.n) + '">Home</a></li><li><a href="' + lessonsHref(LV.n) + '">All Level ' + LV.n + ' lessons</a></li><li><a href="glossary.html">Glossary</a></li><li><a href="review.html">Review</a></li><li><a href="review.html?test=' + LV.n + '">Level ' + LV.n + ' test</a></li><li><a href="me.html">My learning</a></li>' +
         (next ? '<li><a href="' + lessonHref(next.id) + '">Next lesson: ' + esc(next.title) + "</a></li>" : "") + "</ul></div>" +
       '<div><p class="foot-head">Level ' + LV.n + ' units</p><ul>' + UNITS.map(function (u, i) {
         var first = LESSONS.find(function (l) { return l.unit === u.id; });
@@ -1389,7 +1769,8 @@
     function close() { drawer.hidden = true; document.body.classList.remove("menu-open"); btn.setAttribute("aria-expanded", "false"); }
     btn.onclick = function () {
       if (!drawer.hidden) return close();
-      drawer.innerHTML = '<div class="drawer-panel">' + navTab() + "</div>";
+      drawer.innerHTML = '<div class="drawer-panel">' + navTab() + '<div class="drawer-display">' + displayMenu() + "</div></div>";
+      wireDisplay(drawer);
       drawer.hidden = false; document.body.classList.add("menu-open"); btn.setAttribute("aria-expanded", "true");
       var here = drawer.querySelector(".here a, a.here"); if (here) here.focus(); else { var a = drawer.querySelector("a"); if (a) a.focus(); }
     };
