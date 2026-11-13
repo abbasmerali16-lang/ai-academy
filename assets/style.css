@@ -750,3 +750,11 @@ body[data-page="home"] #how, body[data-page="home"] #faq { background: var(--sur
 .plot .km-a { fill: var(--accent); } .plot .km-b { fill: var(--gold); } .plot .km-c { fill: #7a4fa3; }
 .plot .km-centre { stroke: var(--heading); stroke-width: 2; }
 .cm { max-width: 420px; font-size: 15px; } .cm td { text-align: center; font-variant-numeric: tabular-nums; }
+
+/* Level 4 activities */
+.chip.sel { background: var(--accent); border-color: var(--accent); color: #fff; }
+.att-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
+.att-word { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 8px; border: 1px solid var(--border); border-radius: var(--radius); font: inherit; color: var(--text); cursor: pointer; min-width: 44px; }
+.att-word small { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.att-word.att-focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.noise-grid { max-width: 240px; background: var(--surface); }
