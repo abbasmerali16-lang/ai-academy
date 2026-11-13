@@ -631,3 +631,7 @@ a.level.open:hover { border-color: var(--accent); }
 .nav-locked + .nav-locked { margin-top: 6px; }
 .plot .bar-col { fill: var(--accent); }
 .plot text { fill: var(--muted); font-family: Calibri, Carlito, sans-serif; }
+.plot .dot-off { fill: var(--muted); opacity: .45; }
+.plot .km-a { fill: var(--accent); } .plot .km-b { fill: var(--gold); } .plot .km-c { fill: #7a4fa3; }
+.plot .km-centre { stroke: var(--heading); stroke-width: 2; }
+.cm { max-width: 420px; font-size: 15px; } .cm td { text-align: center; font-variant-numeric: tabular-nums; }
