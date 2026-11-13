@@ -1102,57 +1102,102 @@
     });
     return html + "</nav>";
   }
-  function buildSides() {
+  /* ---------- top navigation with drop-down menus ---------- */
+  function buildTopNav() {
+    var nav = document.querySelector(".site-header .nav");
+    if (!nav) return;
+    var curId = page === "lesson" ? (currentLessonId() || ALL[0].id) : null;
+    var n = doneCount(), t = LESSONS.length;
+    var levels = LEVELS.map(function (m) {
+      if (!m.ready) return '<li class="dd-off"><span class="dd-lv">Level ' + m.n + "</span><span>" + esc(m.name) + '</span><em>Coming soon</em></li>';
+      var md = m.lessons.filter(function (l) { return isDone(l.id); }).length;
+      return '<li' + (m === LV ? ' class="here"' : "") + '><a href="' + levelHref(m.n) + '"><span class="dd-lv">Level ' + m.n + "</span><span>" + esc(m.name) + "</span><em>" + md + "/" + m.lessons.length + " done</em></a></li>";
+    }).join("");
+    var units = UNITS.map(function (u) {
+      var ls = LESSONS.filter(function (l) { return l.unit === u.id; });
+      return '<div class="dd-col"><p class="dd-head">' + esc(u.title) + "</p><ol>" + ls.map(function (l) {
+        return '<li class="' + (l.id === curId ? "here" : "") + (isDone(l.id) ? " done" : "") + '"><a href="' + lessonHref(l.id) + '"><span class="dd-num">' + (isDone(l.id) ? "✓" : lessonTag(l)) + "</span><span>" + esc(l.title) + "</span></a></li>";
+      }).join("") + "</ol></div>";
+    }).join("");
+    nav.className = "nav topnav";
+    nav.setAttribute("aria-label", "Main menu");
+    nav.innerHTML =
+      '<a class="tn-link' + (page === "home" ? " active" : "") + '" href="' + levelHref(LV.n) + '">Home</a>' +
+      '<div class="tn-item"><button class="tn-btn" type="button" aria-expanded="false">Levels</button>' +
+        '<div class="dd dd-levels"><ul class="dd-list">' + levels + "</ul></div></div>" +
+      '<div class="tn-item tn-mega"><button class="tn-btn' + (page === "lesson" ? " active" : "") + '" type="button" aria-expanded="false">Lessons</button>' +
+        '<div class="dd dd-mega"><div class="dd-top"><span>Level ' + LV.n + ": " + esc(LV.name) + '</span><a href="' + levelHref(LV.n) + '#lessons">See all on one page →</a></div><div class="dd-cols">' + units + "</div></div></div>" +
+      '<a class="tn-link' + (page === "glossary" ? " active" : "") + '" href="glossary.html">Glossary</a>' +
+      '<a class="tn-pill" href="' + levelHref(LV.n) + '" title="Your progress in Level ' + LV.n + '">Level ' + LV.n + " · " + n + "/" + t + "</a>";
+    var items = nav.querySelectorAll(".tn-item");
+    function closeAll(except) { items.forEach(function (it) { if (it !== except) { it.classList.remove("open"); it.querySelector(".tn-btn").setAttribute("aria-expanded", "false"); } }); }
+    items.forEach(function (it) {
+      var b = it.querySelector(".tn-btn");
+      b.addEventListener("click", function (e) { e.stopPropagation(); var open = !it.classList.contains("open"); closeAll(it); it.classList.toggle("open", open); b.setAttribute("aria-expanded", String(open)); });
+      it.addEventListener("mouseenter", function () { if (window.matchMedia("(hover: hover)").matches) { closeAll(it); it.classList.add("open"); b.setAttribute("aria-expanded", "true"); } });
+      it.addEventListener("mouseleave", function () { if (window.matchMedia("(hover: hover)").matches) { it.classList.remove("open"); b.setAttribute("aria-expanded", "false"); } });
+    });
+    document.addEventListener("click", function (e) { if (!nav.contains(e.target)) closeAll(); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeAll(); });
+  }
+
+  /* ---------- what used to sit in the side panels now flows inside each page ---------- */
+  function pageBand(nodes) {
     var main = document.querySelector("main");
-    if (!main) return;
-    var left = navTab(), right = "";
+    if (!main || !nodes.length) return;
+    var band = document.createElement("section");
+    band.className = "page-band";
+    var inner = document.createElement("div"); inner.className = "page-band-inner";
+    nodes.forEach(function (x) { if (x) inner.appendChild(x); });
+    band.appendChild(inner);
+    main.parentNode.insertBefore(band, main);
+  }
+  function termStrip() {
+    var t = termOfTheDay();
+    return '<aside class="term-strip"><span class="ts-label">Term of the day</span><p><strong>' + esc(t.term) + "</strong> " + esc(t.def) + '</p><a href="' + lessonHref(t.lesson.id) + '">From ' + (t.lesson.level > 1 ? "Level " + t.lesson.level + ", lesson " + t.lesson.num : "Lesson " + t.n) + " →</a></aside>";
+  }
+  function buildInline() {
     if (page === "home") {
-      var units = UNITS;
       document.querySelectorAll(".unit-head").forEach(function (h, i) { h.id = "unit-" + (i + 1); });
-      right = progressCard() + termCard() + card("Jump to a unit", '<ol class="side-list">' + units.map(function (u, i) {
-        var ls = LESSONS.filter(function (l) { return l.unit === u.id; }), d = ls.filter(function (l) { return isDone(l.id); }).length;
-        return '<li><a href="#unit-' + (i + 1) + '">' + esc(u.title.replace(/^Unit \d+ · /, "")) + '</a><span class="side-count">' + d + "/" + ls.length + "</span></li>";
-      }).join("") + "</ol>");
+      var how = document.getElementById("how");
+      if (how) how.insertAdjacentHTML("afterend", termStrip());
     } else if (page === "lesson") {
       var art = document.getElementById("lesson");
+      var l = lessonById(currentLessonId()) || ALL[0];
+      pageBand([art.querySelector(".crumbs"), art.querySelector(".eyebrow"), art.querySelector("h1"), art.querySelector(".lead")]);
       var heads = art.querySelectorAll("h2");
       heads.forEach(function (h, i) { h.id = "sec-" + (i + 1); });
-      var l = lessonById(currentLessonId()) || ALL[0];
-      right = card("In this lesson", '<ol class="side-list side-toc">' + Array.prototype.map.call(heads, function (h) {
-        return '<li><a href="#' + h.id + '">' + esc(h.textContent) + "</a></li>";
-      }).join("") + "</ol>") +
-        card("Key terms", '<dl class="side-terms">' + l.terms.slice(0, 6).map(function (t) {
-          return "<dt>" + esc(t[0]) + "</dt><dd>" + esc(t[1]) + "</dd>";
-        }).join("") + "</dl>" + (l.terms.length > 6 ? '<p class="side-small"><a href="#sec-' + (Array.prototype.findIndex.call(heads, function (h) { return /key terms/i.test(h.textContent); }) + 1) + '">See all ' + l.terms.length + " terms</a></p>" : "")) +
-        progressCard();
+      var n = doneCount(), t = LESSONS.length, pct = Math.round(100 * n / t);
+      var box = '<nav class="in-lesson" aria-label="In this lesson"><div class="il-head"><span>In this lesson</span>' +
+        '<span class="il-meta">' + l.minutes + " min read · " + l.terms.length + " key terms · quiz at the end</span></div>" +
+        '<ol class="il-list">' + Array.prototype.map.call(heads, function (h) { return '<li><a href="#' + h.id + '">' + esc(h.textContent) + "</a></li>"; }).join("") + "</ol>" +
+        '<div class="il-progress"><span>Your Level ' + LV.n + " progress: " + n + " of " + t + ' lessons</span><div class="bar"><span style="width:' + pct + '%"></span></div></div></nav>';
+      art.insertAdjacentHTML("afterbegin", box);
+      // Highlight the section being read.
+      var toc = art.querySelectorAll(".il-list a");
+      if (toc.length && "IntersectionObserver" in window) {
+        var obs = new IntersectionObserver(function (entries) {
+          entries.forEach(function (e) { if (e.isIntersecting) toc.forEach(function (x) { x.classList.toggle("active", x.getAttribute("href") === "#" + e.target.id); }); });
+        }, { rootMargin: "0px 0px -70% 0px" });
+        heads.forEach(function (h) { obs.observe(h); });
+      }
     } else if (page === "glossary") {
+      var hero = document.querySelector("main .hero");
+      if (hero) { pageBand([hero.querySelector(".eyebrow"), hero.querySelector("h1"), hero.querySelector(".lead")]); hero.remove(); }
       var letters = {};
       document.querySelectorAll("#gloss dt").forEach(function (dt) {
         var c = dt.textContent.charAt(0).toUpperCase();
         if (!letters[c]) { letters[c] = true; dt.id = "letter-" + c; }
       });
-      right = card("Jump to a letter", '<div class="side-letters">' + Object.keys(letters).map(function (c) { return '<a href="#letter-' + c + '">' + c + "</a>"; }).join("") + "</div>") + termCard() + progressCard();
-    }
-    var layout = document.createElement("div");
-    layout.className = "layout";
-    main.parentNode.insertBefore(layout, main);
-    var a = document.createElement("aside"); a.className = "side side-left"; a.innerHTML = left;
-    var b = document.createElement("aside"); b.className = "side side-right"; b.innerHTML = right;
-    layout.appendChild(a); layout.appendChild(main); layout.appendChild(b);
-
-    // Highlight the section being read in the lesson outline.
-    var toc = document.querySelectorAll(".side-toc a");
-    if (toc.length && "IntersectionObserver" in window) {
-      var obs = new IntersectionObserver(function (entries) {
-        entries.forEach(function (e) {
-          if (!e.isIntersecting) return;
-          toc.forEach(function (x) { x.classList.toggle("active", x.getAttribute("href") === "#" + e.target.id); });
-        });
-      }, { rootMargin: "0px 0px -70% 0px" });
-      document.querySelectorAll("#lesson h2").forEach(function (h) { obs.observe(h); });
+      var search = document.getElementById("gloss-search");
+      if (search) {
+        search.insertAdjacentHTML("afterend", '<nav class="letter-bar" aria-label="Jump to a letter">' + Object.keys(letters).map(function (c) { return '<a href="#letter-' + c + '">' + c + "</a>"; }).join("") + "</nav>");
+        search.insertAdjacentHTML("beforebegin", termStrip());
+      }
     }
   }
-  buildSides();
+  buildTopNav();
+  buildInline();
 
   /* Footer with grouped, clearly labelled links (same on every page). */
   function buildFooter() {
@@ -1246,11 +1291,11 @@
 
     // Cards and sections slide gently into view as you scroll.
     if (!calm && "IntersectionObserver" in window) {
-      var items = document.querySelectorAll("main h2, .lesson-item, .panel, .callout, .q, .terms li, .side-card, .level, .table-scroll, .unit-card, .steps li, .faq details, .cta-band, .stats div");
+      var items = document.querySelectorAll("main h2, .lesson-item, .panel, .callout, .q, .terms li, .level, .term-strip, .table-scroll, .unit-card, .steps li, .faq details, .cta-band, .stats div");
       var io = new IntersectionObserver(function (entries) {
         entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
       }, { rootMargin: "0px 0px -8% 0px" });
-      items.forEach(function (el, i) { el.classList.add("reveal"); el.style.transitionDelay = (el.classList.contains("side-card") ? (i % 5) * 70 : 0) + "ms"; io.observe(el); });
+      items.forEach(function (el, i) { el.classList.add("reveal"); el.style.transitionDelay = 0 + "ms"; io.observe(el); });
     }
 
     // Thin reading bar at the top shows how far through the lesson you are.
