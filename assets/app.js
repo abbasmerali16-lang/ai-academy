@@ -1,15 +1,16 @@
 (function () {
   "use strict";
   /* ---------- levels ---------- */
-  // Each level's lessons live in their own file (lessons.js for Level 1, level2.js, ...).
+  // Each level's lessons live in their own file (lessons.js for Level 1, level-tools.js, level-claude.js, level2.js, ...).
   // A level with no lessons loaded yet shows as "coming soon".
   var LEVELS = [
     { n: 1, id: "1", name: "Foundations", key: "LEVEL1", what: "what AI is, how it reasons and learns, and how to use it well and within the rules", lead: "Sixteen short lessons take you from \"what is AI?\" to using it well and knowing the rules. No maths or coding needed.", cert: "You've finished AI Foundations. You can explain what AI is, how it reasons and learns, how to judge whether it's any good, how chatbots and other AI tools work, and how to use AI responsibly and within the rules." },
     { n: 2, id: "tools", name: "AI tools in the real world", key: "LEVELT", lead: "Sixteen lessons on the AI tools people really use, from assistants, research and translation to images, voice, video, design, coding, app builders and automation, with a directory of over 100 tools.", cert: "You've finished AI tools in the real world. You know the main families of AI tools, how to choose and use them safely, and how AI is used for writing, research, languages, images, sound, video, design, coding, automation and across industries." },
-    { n: 3, id: "2", name: "Data and Python", key: "LEVEL2", lead: "Sixteen lessons take you from your first line of Python to exploring a real dataset, with the statistics and gentle maths that AI is built on. You can run real code right in the page.", cert: "You've finished Data and Python. You can write and read Python, load, clean and summarise data with NumPy and pandas, describe it with statistics and charts, and explain the maths ideas that machine learning rests on." },
-    { n: 4, id: "3", name: "Machine learning in practice", key: "LEVEL3", lead: "Sixteen lessons on building real machine learning models with scikit-learn: framing problems, the main model families, measuring and improving them, and making them fair and explainable.", cert: "You've finished Machine learning in practice. You can frame a problem, prepare data, train and compare models, tune and evaluate them honestly, and explain and check them for fairness." },
-    { n: 5, id: "4", name: "Deep learning and LLMs", key: "LEVEL4", lead: "Sixteen lessons inside modern AI: how neural networks really train, attention and transformers, how large language models are built, and image generators, retrieval and agents.", cert: "You've finished Deep learning and LLMs. You can explain how neural networks train, how transformers and large language models work, and how image generators, retrieval and agents are built." },
-    { n: 6, id: "5", name: "Mastery: build and deploy", key: "LEVEL5", lead: "Sixteen lessons on building, shipping and governing real AI systems: AI APIs, retrieval and agents, deployment and monitoring, security, governance and reading research.", cert: "You've completed the whole academy. You can design, build, evaluate, deploy, secure and govern AI systems, and keep learning from the research frontier." }
+    { n: 3, id: "claude", name: "Claude in depth", key: "LEVELC", lead: "Sixteen lessons on using one assistant, Anthropic's Claude, to its full potential: every app, model and setting, Projects, memory, Research, Artifacts, connectors, skills, Cowork, Claude Code and the developer platform.", cert: "You've finished Claude in depth. You know how every part of Claude works, from models, effort, Projects and memory to Artifacts, connectors, skills, Cowork, Claude Code and the API, and how to use each one well and safely." },
+    { n: 4, id: "2", name: "Data and Python", key: "LEVEL2", lead: "Sixteen lessons take you from your first line of Python to exploring a real dataset, with the statistics and gentle maths that AI is built on. You can run real code right in the page.", cert: "You've finished Data and Python. You can write and read Python, load, clean and summarise data with NumPy and pandas, describe it with statistics and charts, and explain the maths ideas that machine learning rests on." },
+    { n: 5, id: "3", name: "Machine learning in practice", key: "LEVEL3", lead: "Sixteen lessons on building real machine learning models with scikit-learn: framing problems, the main model families, measuring and improving them, and making them fair and explainable.", cert: "You've finished Machine learning in practice. You can frame a problem, prepare data, train and compare models, tune and evaluate them honestly, and explain and check them for fairness." },
+    { n: 6, id: "4", name: "Deep learning and LLMs", key: "LEVEL4", lead: "Sixteen lessons inside modern AI: how neural networks really train, attention and transformers, how large language models are built, and image generators, retrieval and agents.", cert: "You've finished Deep learning and LLMs. You can explain how neural networks train, how transformers and large language models work, and how image generators, retrieval and agents are built." },
+    { n: 7, id: "5", name: "Mastery: build and deploy", key: "LEVEL5", lead: "Sixteen lessons on building, shipping and governing real AI systems: AI APIs, retrieval and agents, deployment and monitoring, security, governance and reading research.", cert: "You've completed the whole academy. You can design, build, evaluate, deploy, secure and govern AI systems, and keep learning from the research frontier." }
   ];
   LEVELS.forEach(function (m) {
     m.lessons = window[m.key] || [];
@@ -817,6 +818,64 @@
       }
       el.querySelectorAll("[data-i]").forEach(function (b) {
         b.onclick = function () { var i = +b.dataset.i; on[i] = !on[i]; b.classList.toggle("yes", on[i]); update(); };
+      });
+      update();
+    },
+
+    /* ===== Claude in depth activities ===== */
+
+    /* Switch the parts of a Claude-style prompt on and off and see it take shape, with XML tags. */
+    "prompt-xml": function (el) {
+      var parts = [
+        ["Role", "role", "You're a friendly personal finance coach who explains things simply."],
+        ["Context", "context", "I'm 34, I rent in Manchester, and I want to start saving for a house deposit. I've never had a budget."],
+        ["Document", "document", "(my last three months of bank statements, pasted or uploaded)"],
+        ["Task", "task", "Suggest a simple monthly budget and three changes that would save the most money."],
+        ["Format", "format", "A short table of categories with suggested amounts, then the three changes as bullet points. Under 250 words."],
+        ["Ask first", "questions", "Before you start, ask me up to three questions you need answered to do this well."]
+      ];
+      var on = [false, false, false, true, false, false];
+      el.className = "panel";
+      el.innerHTML = "<h3>Try it: build a Claude-style prompt</h3><p>Switch the parts on and off. Notice how the tags keep each part separate, so Claude can't mix up your instructions with your material.</p>" +
+        '<div class="chip-row">' + parts.map(function (p, i) { return '<button class="chip' + (on[i] ? " yes" : "") + '" type="button" data-i="' + i + '">' + p[0] + "</button>"; }).join("") + "</div>" +
+        '<div class="neuron-out prompt-out" aria-live="polite"></div>';
+      function update() {
+        var lines = parts.filter(function (p, i) { return on[i]; }).map(function (p) { return "&lt;" + p[1] + "&gt;" + esc(p[2]) + "&lt;/" + p[1] + "&gt;"; });
+        var n = on.filter(Boolean).length;
+        var verdict = n <= 1 ? "Vague: Claude knows the job but nothing about you, so it will give generic advice." : n <= 3 ? "Better: Claude can tailor its answer to you." : n <= 5 ? "Strong: clear role, background and output." : "Excellent: Claude will check the gaps with you before it starts.";
+        el.querySelector(".prompt-out").innerHTML = (lines.length ? '<span class="px-lines">' + lines.join("<br>") + "</span>" : "<em>(empty prompt)</em>") + "<br><br><strong>" + verdict + "</strong>";
+      }
+      el.querySelectorAll("[data-i]").forEach(function (b) {
+        b.onclick = function () { var i = +b.dataset.i; on[i] = !on[i]; b.classList.toggle("yes", on[i]); update(); };
+      });
+      update();
+    },
+
+    /* "My Claude setup": tick off each habit from the level. Saved in this browser. */
+    "claude-checklist": function (el) {
+      var KEY_CL = "aiAcademy.claudeSetup.v1", done = loadKey(KEY_CL), items = window.CLAUDE_CHECKLIST || [];
+      el.className = "panel";
+      el.innerHTML = "<h3>Your Claude setup, Abbas</h3><p>Tick each habit once you've done it for real. The link takes you back to the lesson that explains it. Your ticks are saved in this browser.</p>" +
+        '<div class="bar cl-bar" role="progressbar" aria-label="Claude setup progress" aria-valuemin="0" aria-valuemax="' + items.length + '"><span></span></div>' +
+        '<p class="cl-count" aria-live="polite"></p>' +
+        '<ul class="cl-list">' + items.map(function (it) {
+          var l = lessonById(it.lesson);
+          return '<li><label><input type="checkbox" data-k="' + it.id + '"' + (done[it.id] ? " checked" : "") + "> <span>" + esc(it.text) + "</span></label>" +
+            (l ? ' <a class="cl-link" href="' + lessonHref(l.id) + '">Lesson ' + l.num + "</a>" : "") + "</li>";
+        }).join("") + "</ul>";
+      function update() {
+        var n = items.filter(function (it) { return done[it.id]; }).length;
+        el.querySelector(".cl-bar").setAttribute("aria-valuenow", n);
+        el.querySelector(".cl-bar span").style.width = Math.round(100 * n / Math.max(1, items.length)) + "%";
+        el.querySelector(".cl-count").innerHTML = "<strong>" + n + " of " + items.length + "</strong> done" + (n === items.length ? ". You're using Claude to its full potential." : ".");
+        return n;
+      }
+      el.querySelectorAll("input[data-k]").forEach(function (c) {
+        c.onchange = function () {
+          if (c.checked) done[c.dataset.k] = 1; else delete done[c.dataset.k];
+          saveKey(KEY_CL, done);
+          if (update() === items.length && c.checked) celebrate();
+        };
       });
       update();
     },

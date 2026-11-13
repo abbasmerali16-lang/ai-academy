@@ -997,3 +997,14 @@ html.dark .tool-facts { background: var(--surface-2); }
 .tool-facts { grid-template-columns: repeat(4, 1fr); margin-top: 28px; }
 @media (max-width: 760px) { .tool-facts { grid-template-columns: 1fr 1fr; } .tool-facts div:nth-child(2n) { border-right: 0; } .tool-facts div:nth-child(-n+2) { border-bottom: 1px solid var(--border); } }
 .tool-facts div:last-child { border-right: 0; }
+
+/* ---------- Claude in depth (Level 3) activities ---------- */
+.px-lines { display: block; font-family: Consolas, "Courier New", monospace; font-size: 15px; line-height: 1.6; text-align: left; overflow-wrap: anywhere; }
+.cl-bar { margin: 10px 0 6px; }
+.cl-count { margin: 0 0 8px; text-align: left !important; }
+.cl-list { list-style: none; padding: 0; margin: 0; }
+.cl-list li { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 9px 0; border-top: 1px solid var(--border); text-align: left; }
+.cl-list label { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; line-height: 1.4; }
+.cl-list input { width: 18px; height: 18px; margin-top: 3px; accent-color: var(--accent, #178582); flex: none; }
+.cl-list input:checked + span { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--gold, #BFA181); }
+.cl-link { white-space: nowrap; font-size: 15px; }

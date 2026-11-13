@@ -45,7 +45,7 @@ window.AI_TOOLS = [
     watch: ["Like all assistants it can make mistakes; check important facts", "Free use has message limits that reset every few hours", "Fewer built-in media features than some rivals (for example, no video generation)"],
     start: ["Go to claude.ai or install the app and sign up", "Upload a PDF you need to understand and ask for a plain-English summary", "Try a Project: add a few documents and some standing instructions"],
     tryit: "Upload a long terms-and-conditions document and ask: \"What are the five things here I'd most want to know before signing, and is anything unusual?\"",
-    alts: ["chatgpt", "gemini", "lechat"], url: "https://claude.ai", lesson: "t-assistants"
+    alts: ["chatgpt", "gemini", "lechat"], url: "https://claude.ai", lesson: "c-meet"
   },
   {
     id: "gemini", name: "Gemini", maker: "Google", cat: "chat", price: "Free + paid plans",
@@ -480,7 +480,7 @@ window.AI_TOOLS = [
   {
     id: "stable-diffusion", name: "Stable Diffusion", maker: "Stability AI", cat: "images", price: "Free and open (licence terms apply)",
     blurb: "The open image model that anyone can download, run on their own computer and customise.",
-    what: "Stable Diffusion is a family of image-generation models released openly by Stability AI from 2022. Because the weights are public, a huge community has built tools, add-ons and custom versions for it. You can run it on a decent home computer, so images never leave your machine. You met the idea behind it, diffusion, in Level 5.",
+    what: "Stable Diffusion is a family of image-generation models released openly by Stability AI from 2022. Because the weights are public, a huge community has built tools, add-ons and custom versions for it. You can run it on a decent home computer, so images never leave your machine. You met the idea behind it, diffusion, in Level 6.",
     uses: ["Private image generation on your own computer", "Training custom styles or characters", "Experimenting with how diffusion works"],
     good: ["Free to run and fully customisable", "Huge community of tools and models"],
     watch: ["Needs a good graphics card and some setup (apps like ComfyUI help)", "Fewer built-in safety filters, so responsibility sits with you", "Getty Images took Stability AI to court over training data"],
@@ -758,7 +758,7 @@ window.AI_TOOLS = [
     watch: ["It acts on your files and can run commands, so review its plans and use its permission settings", "Needs a paid Claude plan or API usage"],
     start: ["With a paid Claude plan, open Claude Code on the web or install it in a terminal", "Start with a small task in a test project"],
     tryit: "Ask it to add a small new feature to a test project, and read the plan before letting it make changes.",
-    alts: ["codex", "cursor", "github-copilot"], url: "https://www.anthropic.com/claude-code", lesson: "t-coding"
+    alts: ["codex", "cursor", "github-copilot"], url: "https://www.anthropic.com/claude-code", lesson: "c-code"
   },
   {
     id: "codex", name: "OpenAI Codex", maker: "OpenAI", cat: "coding", price: "Included in ChatGPT paid plans",
@@ -924,7 +924,7 @@ window.AI_TOOLS = [
     what: "Comet is Perplexity's web browser with an assistant built in. It can summarise the page you're on, compare tabs, and act for you, such as filling in forms or doing a shopping task. Other \"agentic browsers\", including OpenAI's ChatGPT Atlas, work in a similar way.",
     uses: ["Summarising and comparing open tabs", "Delegating routine web tasks"],
     good: ["Assistance right where you browse"],
-    watch: ["Web pages can hide instructions that try to hijack an AI agent (prompt injection, from Level 6); don't give it access to banking or sensitive accounts", "Check its actions before anything is bought or sent"],
+    watch: ["Web pages can hide instructions that try to hijack an AI agent (prompt injection, from Level 7); don't give it access to banking or sensitive accounts", "Check its actions before anything is bought or sent"],
     start: ["Download Comet and ask it to summarise a page", "Start with tasks that can't do harm, like research"],
     tryit: "Open three product reviews in tabs and ask it to compare them in a table.",
     alts: ["chatgpt", "perplexity"], url: "https://www.perplexity.ai/comet", lesson: "t-automation"
@@ -967,12 +967,12 @@ window.AI_TOOLS = [
   {
     id: "google-colab", name: "Google Colab", maker: "Google", cat: "builders", price: "Free + paid plans",
     blurb: "Free Python notebooks in your browser, with free GPU time and Gemini to help write the code.",
-    what: "Colab gives you Jupyter notebooks in the browser, with Python and the main data science libraries ready to go, plus free (limited) access to GPUs for training models. Gemini is built in to write, explain and fix code. It's the natural next step after the Python boxes in Level 3.",
-    uses: ["Running the Python you learned in Level 3 on bigger data", "Training small models on a free GPU", "Sharing notebooks"],
+    what: "Colab gives you Jupyter notebooks in the browser, with Python and the main data science libraries ready to go, plus free (limited) access to GPUs for training models. Gemini is built in to write, explain and fix code. It's the natural next step after the Python boxes in Level 4.",
+    uses: ["Running the Python you learned in Level 4 on bigger data", "Training small models on a free GPU", "Sharing notebooks"],
     good: ["Nothing to install", "Free GPU access for learning"],
     watch: ["Free sessions time out and GPUs aren't guaranteed", "Don't upload sensitive data"],
-    start: ["Go to colab.research.google.com and create a notebook", "Paste in code from one of your Level 3 lessons and run it"],
-    tryit: "Run a Level 3 pandas example in Colab and ask Gemini to add a chart.",
+    start: ["Go to colab.research.google.com and create a notebook", "Paste in code from one of your Level 4 lessons and run it"],
+    tryit: "Run a Level 4 pandas example in Colab and ask Gemini to add a chart.",
     alts: ["kaggle", "replit"], url: "https://colab.research.google.com", lesson: "t-coding"
   },
   {
@@ -980,7 +980,7 @@ window.AI_TOOLS = [
     blurb: "Free datasets, notebooks, courses and machine learning competitions.",
     what: "Kaggle is a community for data science and machine learning. It has thousands of free datasets, free notebooks with GPUs, short courses, and competitions where people compete to build the best model for a real problem.",
     uses: ["Finding datasets to practise on", "Learning from other people's notebooks", "Entering beginner competitions"],
-    good: ["Free and full of real examples", "Great for practising Level 3 and 4 skills"],
+    good: ["Free and full of real examples", "Great for practising Level 4 and 5 skills"],
     watch: ["Competition code can be very advanced; start with beginner ones"],
     start: ["Sign up at kaggle.com and try the Titanic beginner competition"],
     tryit: "Open a popular notebook for the Titanic competition and find where they handle missing data.",
@@ -989,7 +989,7 @@ window.AI_TOOLS = [
   {
     id: "openai-platform", name: "OpenAI API Platform", maker: "OpenAI", cat: "builders", price: "Pay as you go",
     blurb: "Use OpenAI's models in your own apps through an API, paying per token.",
-    what: "The OpenAI Platform gives developers access to OpenAI's models through an API, with tools for building agents, search over files, speech and images. You pay per token used, as you learned in Level 6.",
+    what: "The OpenAI Platform gives developers access to OpenAI's models through an API, with tools for building agents, search over files, speech and images. You pay per token used, as you learned in Level 7.",
     uses: ["Adding AI to your own app or website", "Building chatbots and agents"],
     good: ["Wide range of models and tools", "Extensive documentation"],
     watch: ["Keep API keys secret and set spending limits"],
@@ -1000,13 +1000,13 @@ window.AI_TOOLS = [
   {
     id: "claude-platform", name: "Claude Developer Platform", maker: "Anthropic", cat: "builders", price: "Pay as you go",
     blurb: "Use Claude models in your own programs through Anthropic's API, with a Console for testing prompts.",
-    what: "Anthropic's developer platform offers Claude models through an API, with features such as tool use, prompt caching and batch processing (all covered in Level 6), and a Console for writing and testing prompts.",
+    what: "Anthropic's developer platform offers Claude models through an API, with features such as tool use, prompt caching and batch processing (all covered in Level 7), and a Console for writing and testing prompts.",
     uses: ["Building apps and agents on Claude", "Processing large numbers of documents"],
     good: ["Strong models for long documents, coding and agents", "Clear documentation"],
     watch: ["Keep keys on a server, never in web page code", "Set spending limits"],
     start: ["Create an account in the Claude Console, add a small budget and test a prompt in the Workbench"],
     tryit: "Write a system prompt for a helpful bike shop assistant and test it with three customer questions.",
-    alts: ["openai-platform", "google-ai-studio"], url: "https://console.anthropic.com", lesson: "t-nocode"
+    alts: ["openai-platform", "google-ai-studio"], url: "https://console.anthropic.com", lesson: "c-platform"
   },
 
   /* ---------------- Learning and study ---------------- */
