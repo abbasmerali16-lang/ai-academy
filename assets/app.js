@@ -108,7 +108,7 @@
     var title = "Level " + LV.n + " · " + esc(LV.name);
     var onList = page === "lessons";
     set("hero-eyebrow", onList ? title : "Welcome to your AI Journey");
-    set("hero-lead", onList ? "Abbas, here is everything in Level " + LV.n + " on one page: the units, every lesson, how lessons work and common questions." : "Abbas, this academy was built just for you. " + esc(LV.lead));
+    set("hero-lead", onList ? "Abbas, here is everything in Level " + LV.n + " on one page: the units, every lesson, how lessons work and common questions." : "Abbas, this academy was built just for you. Five levels and " + ALL.length + " short lessons take you from \"what is AI?\" to building and running AI systems of your own. You start with no maths or coding and pick both up along the way.");
     set("lp-title", "Your Level " + LV.n + " lessons");
     if (onList) document.title = "Level " + LV.n + " lessons · Abbas’ AI Academy";
     set("units-kicker", title);
@@ -255,7 +255,7 @@
     document.title = l.title + " · Abbas’ AI Academy";
 
     var html =
-      '<p class="crumbs"><a href="' + levelHref(LV.n) + '">Level ' + LV.n + ": " + esc(LV.name) + '</a> › ' + (unitOf(l) ? esc(unitOf(l).title) + " › " : "") + "Lesson " + (idx + 1) + " of " + LESSONS.length + "</p>" +
+      '<p class="crumbs"><a href="' + lessonsHref(LV.n) + '">Level ' + LV.n + ": " + esc(LV.name) + '</a> › ' + (unitOf(l) ? esc(unitOf(l).title) + " › " : "") + "Lesson " + (idx + 1) + " of " + LESSONS.length + "</p>" +
       '<span class="eyebrow">Lesson ' + (idx + 1) + " · " + l.minutes + " min read</span>" +
       "<h1>" + esc(l.title) + "</h1>" +
       '<p class="lead">' + esc(l.summary) + "</p>" +
@@ -268,7 +268,7 @@
       "<p>Get at least " + passMark(l) + " of " + l.quiz.length + " right to complete this lesson.</p>" +
       '<div id="questions"></div><div id="quiz-result"></div></section>' +
       '<nav class="pager">' +
-      (prev ? '<a class="btn secondary" href="' + lessonHref(prev.id) + '">← ' + esc(prev.title) + "</a>" : '<a class="btn secondary" href="' + levelHref(LV.n) + '">← All lessons</a>') +
+      (prev ? '<a class="btn secondary" href="' + lessonHref(prev.id) + '">← ' + esc(prev.title) + "</a>" : '<a class="btn secondary" href="' + lessonsHref(LV.n) + '">← All lessons</a>') +
       (idx < LESSONS.length - 1 ? '<a class="btn" id="next-btn" href="' + lessonHref(nxt.id) + '">Next: ' + esc(nxt.title) + " →</a>" :
         nxt ? '<a class="btn" id="next-btn" href="' + lessonHref(nxt.id) + '">Start Level ' + nxt.level + ": " + esc(levelOf(nxt).name) + " →</a>" :
         '<a class="btn" id="next-btn" href="' + lessonsHref(LV.n) + '#certificate">Finish Level ' + LV.n + " →</a>") +
@@ -295,10 +295,21 @@
 
   function passMark(l) { return Math.ceil(l.quiz.length * 0.66); }
 
+  /* Mix up the order of answer options each time, so the right answer isn't always in the same place.
+     Options like "All of them" stay last, where they read naturally. */
+  function mixOptions(item) {
+    var idx = item.options.map(function (_, i) { return i; });
+    var last = idx.filter(function (i) { return /^(all|none|both) of (them|these|the above)$|^(all|both|neither) /i.test(item.options[i]) && /^(all of|none of|both of|neither)/i.test(item.options[i]); });
+    var rest = idx.filter(function (i) { return last.indexOf(i) < 0; });
+    for (var i = rest.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = rest[i]; rest[i] = rest[j]; rest[j] = t; }
+    var order = rest.concat(last);
+    return { q: item.q, explain: item.explain, options: order.map(function (i) { return item.options[i]; }), answer: order.indexOf(item.answer) };
+  }
+
   function renderQuiz(l) {
     var box = $("#questions");
     var answered = 0, correct = 0;
-    l.quiz.forEach(function (item, qi) {
+    l.quiz.map(mixOptions).forEach(function (item, qi) {
       var q = document.createElement("div");
       q.className = "q";
       q.innerHTML = "<p>" + (qi + 1) + ". " + esc(item.q) + "</p>";
@@ -1561,7 +1572,8 @@
     }
     function start() {
       var items = shuffle(bank).slice(0, TEST_LEN).map(function (x) {
-        return { ask: esc(x.q.q), from: "From lesson " + x.l.num + ": " + esc(x.l.title), options: x.q.options, answer: x.q.answer, explain: x.q.explain };
+        var mq = mixOptions(x.q);
+        return { ask: esc(x.q.q), from: "From lesson " + x.l.num + ": " + esc(x.l.title), options: mq.options, answer: mq.answer, explain: x.q.explain };
       });
       main.querySelector(".rv-panel").hidden = true;
       main.querySelectorAll(".certificate-card, .certificate-card + .rv-go, main > h2").forEach(function (x) { x.hidden = true; });

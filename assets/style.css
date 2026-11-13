@@ -898,3 +898,6 @@ html.dark .hero-band { background: linear-gradient(to bottom, transparent calc(1
 html.dark .letter-bar { background: var(--bg); }
 html.dark .hero-band .btn.secondary:hover { background: #fff; color: var(--ink); }
 html.dark .bar { background: var(--line-dark) !important; }
+
+/* Square corners everywhere (Abbas' design rule) */
+*, *::before, *::after { border-radius: 0 !important; }
