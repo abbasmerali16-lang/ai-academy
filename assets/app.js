@@ -107,7 +107,7 @@
     var set = function (id, html) { var el = document.getElementById(id); if (el) el.innerHTML = html; };
     var title = "Level " + LV.n + " · " + esc(LV.name);
     var onList = page === "lessons";
-    set("hero-eyebrow", onList ? title : "Welcome, Abbas · " + title);
+    set("hero-eyebrow", onList ? title : "Welcome to your AI Journey");
     set("hero-lead", onList ? "Abbas, here is everything in Level " + LV.n + " on one page: the units, every lesson, how lessons work and common questions." : "Abbas, this academy was built just for you. " + esc(LV.lead));
     set("lp-title", "Your Level " + LV.n + " lessons");
     if (onList) document.title = "Level " + LV.n + " lessons · Abbas’ AI Academy";
@@ -129,11 +129,13 @@
   }
 
   function renderLanding(next) {
-    var mins = LESSONS.reduce(function (a, l) { return a + l.minutes; }, 0);
-    var terms = LESSONS.reduce(function (a, l) { return a + l.terms.length; }, 0);
     var n = doneCount(), pct = Math.round(100 * n / LESSONS.length);
     var stats = $("#stats");
-    if (stats) stats.innerHTML = [[LESSONS.length, "short lessons"], [UNITS.length, "units"], ["~" + Math.round(mins / 60), "hours in total"], [terms, "key terms explained"]]
+    // Numbers for the whole course (every level), not just the level showing.
+    var cMins = ALL.reduce(function (a, l) { return a + l.minutes; }, 0);
+    var cTerms = ALL.reduce(function (a, l) { return a + l.terms.length; }, 0);
+    var cUnits = READY.reduce(function (a, m) { return a + m.units.length; }, 0);
+    if (stats) stats.innerHTML = [[LEVELS.length, "levels"], [cUnits, "units"], [ALL.length, "short lessons"], ["~" + Math.round(cMins / 60), "hours in total"], [cTerms, "key terms explained"]]
       .map(function (x) { return "<div><dt>" + x[0] + "</dt><dd>" + x[1] + "</dd></div>"; }).join("");
     var hv = $("#hero-visual");
     if (hv) {
@@ -1278,7 +1280,8 @@
       '<div class="tn-item tn-mega"><button class="tn-btn' + (page === "lesson" || page === "lessons" ? " active" : "") + '" type="button" aria-expanded="false">Lessons</button>' +
         '<div class="dd dd-mega"><div class="dd-top"><span>Level ' + LV.n + ": " + esc(LV.name) + '</span><a href="' + lessonsHref(LV.n) + '">See all on one page →</a></div><div class="dd-cols">' + units + "</div></div></div>" +
       '<a class="tn-link' + (page === "glossary" ? " active" : "") + '" href="glossary.html">Glossary</a>' +
-      '<a class="tn-pill" href="' + levelHref(LV.n) + '" title="Your progress in Level ' + LV.n + '">Level ' + LV.n + " · " + n + "/" + t + "</a>";
+      // The level badge only shows inside a level (a lesson or that level's lesson list).
+      (page === "lesson" || page === "lessons" ? '<a class="tn-pill" href="' + lessonsHref(LV.n) + '" title="Your progress in Level ' + LV.n + '">Level ' + LV.n + " · " + n + "/" + t + "</a>" : "");
     var items = nav.querySelectorAll(".tn-item");
     function closeAll(except) { items.forEach(function (it) { if (it !== except) { it.classList.remove("open"); it.querySelector(".tn-btn").setAttribute("aria-expanded", "false"); } }); }
     items.forEach(function (it) {
