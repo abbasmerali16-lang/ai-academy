@@ -114,7 +114,7 @@
     set("units-kicker", title);
     set("units-title", ["", "One", "Two", "Three", "Four", "Five", "Six"][UNITS.length] + " units. One clear path.");
     set("lessons-kicker", "All " + LESSONS.length + " lessons");
-    set("lessons-title", "Your Level " + LV.n + " lessons");
+    set("lessons-title", "Every lesson, unit by unit");
     set("cert-big", "LEVEL " + LV.n);
     set("cert-title", "Well done, Abbas: Level " + LV.n + " complete");
     set("cert-text", esc(LV.cert) + (LEVELS[LV.n] && LEVELS[LV.n].ready ? ' <a href="' + levelHref(LV.n + 1) + '">On to Level ' + (LV.n + 1) + ": " + esc(LEVELS[LV.n].name) + " →</a>" : ""));
@@ -133,7 +133,7 @@
     var stats = $("#stats");
     // Numbers for the whole course (every level), not just the level showing.
     var cMins = ALL.reduce(function (a, l) { return a + l.minutes; }, 0);
-    var cTerms = ALL.reduce(function (a, l) { return a + l.terms.length; }, 0);
+    var cTerms = uniqueTermCount();
     var cUnits = READY.reduce(function (a, m) { return a + m.units.length; }, 0);
     if (stats) stats.innerHTML = [[LEVELS.length, "levels"], [cUnits, "units"], [ALL.length, "short lessons"], ["~" + Math.round(cMins / 60), "hours in total"], [cTerms, "key terms explained"]]
       .map(function (x) { return "<div><dt>" + x[0] + "</dt><dd>" + x[1] + "</dd></div>"; }).join("");
@@ -171,16 +171,16 @@
     if (ab) { ab.href = lessonsHref(LV.n); ab.textContent = "See all Level " + LV.n + " lessons"; }
     var pt = $("#path-tiles");
     if (pt) {
-      var gloss = allTerms().length, open = READY.length;
+      var gloss = uniqueTermCount();
       var tile = function (href, label, title, text, meta, go, bar) {
         return '<a class="unit-card path-tile" href="' + href + '"><span class="uc-num">' + label + "</span><strong>" + title + '</strong><span class="uc-blurb">' + text + "</span>" +
           '<span class="uc-meta">' + meta + "</span>" + (bar != null ? '<span class="bar"><span style="width:' + bar + '%"></span></span>' : "") + '<span class="uc-go">' + go + " →</span></a>";
       };
       pt.innerHTML =
         tile(lessonsHref(LV.n), "Level " + LV.n + " · " + esc(LV.name), "All lessons", "Every lesson in this level on one page, grouped into its " + UNITS.length + " units.", n + " of " + LESSONS.length + " done", "See all lessons", pct) +
+        tile("review.html", "Practise", "Review and tests", "Ten-question rounds on terms you’ve learned, plus a test at the end of each level.", "A certificate for each level", "Start reviewing") +
         tile("glossary.html", "Reference", "Glossary", "Every key term from every level in plain English, A to Z.", gloss + " key terms", "Open the glossary") +
-        tile("#road", "Your road", "All five levels", "See where you are and switch to any level that is ready.", open + " of " + LEVELS.length + " levels open", "See your road") +
-        tile(lessonsHref(LV.n) + "#how", "Good to know", "How it works", "How each lesson works, plus answers to common questions.", "Read, try, pass, dig deeper", "Find out more");
+        tile("me.html", "Your space", "My learning", "Your streak, daily goal, notes, certificates and save code.", "All in one place", "Open My learning");
     }
     initSearch();
     var cta = $("#cta-btn"), start = $("#start-btn");
@@ -263,10 +263,10 @@
       "<h2>Key terms</h2><ul class=\"terms\">" +
       l.terms.map(function (t) { return "<li><dfn>" + esc(t[0]) + "</dfn>: " + esc(t[1]) + "</li>"; }).join("") +
       "</ul>" +
-      renderSources(l) +
       '<section class="quiz" id="quiz"><h2>Check your understanding</h2>' +
       "<p>Get at least " + passMark(l) + " of " + l.quiz.length + " right to complete this lesson.</p>" +
       '<div id="questions"></div><div id="quiz-result"></div></section>' +
+      renderSources(l) +
       '<nav class="pager">' +
       (prev ? '<a class="btn secondary" href="' + lessonHref(prev.id) + '">← ' + esc(prev.title) + "</a>" : '<a class="btn secondary" href="' + lessonsHref(LV.n) + '">← All lessons</a>') +
       (idx < LESSONS.length - 1 ? '<a class="btn" id="next-btn" href="' + lessonHref(nxt.id) + '">Next: ' + esc(nxt.title) + " →</a>" :
@@ -1198,20 +1198,48 @@
   }
 
   /* ---------- glossary ---------- */
+  /* Glossary: one entry per term (a term used in several lessons lists each meaning), grouped under
+     letter headings, with a search box and a level filter. */
+  // Some terms appear in more than one lesson; count each term once.
+  function uniqueTermCount() { var seen = {}; ALL.forEach(function (l) { l.terms.forEach(function (t) { seen[t[0].toLowerCase()] = 1; }); }); return Object.keys(seen).length; }
+  function glossLetter(term) { var c = term.charAt(0).toUpperCase(); return /[A-Z]/.test(c) ? c : "#"; }
   function renderGlossary() {
-    var all = [];
-    ALL.forEach(function (l) { l.terms.forEach(function (t) { all.push({ term: t[0], def: t[1], lesson: l, n: lessonTag(l) }); }); });
-    all.sort(function (a, b) { return a.term.localeCompare(b.term); });
-    var list = $("#gloss");
-    function draw(filter) {
-      var f = (filter || "").toLowerCase();
-      list.innerHTML = all.filter(function (x) { return !f || (x.term + " " + x.def).toLowerCase().indexOf(f) >= 0; })
-        .map(function (x) {
-          return "<dt>" + esc(x.term) + "</dt><dd>" + esc(x.def) + ' <a href="' + lessonHref(x.lesson.id) + '">' + (x.lesson.level > 1 ? "Level " + x.lesson.level + ", lesson " + x.lesson.num : "Lesson " + x.n) + "</a></dd>";
-        }).join("") || "<dd>No matching terms.</dd>";
+    var groups = {};
+    ALL.forEach(function (l) { l.terms.forEach(function (t) {
+      var k = t[0].toLowerCase();
+      if (!groups[k]) groups[k] = { term: t[0], uses: [] };
+      groups[k].uses.push({ def: t[1], lesson: l });
+    }); });
+    var all = Object.keys(groups).map(function (k) { return groups[k]; });
+    all.sort(function (a, b) { var la = glossLetter(a.term), lb = glossLetter(b.term); if (la !== lb) return la === "#" ? -1 : lb === "#" ? 1 : la.localeCompare(lb); return a.term.localeCompare(b.term); });
+    var list = $("#gloss"), level = 0, text = "";
+    var count = $("#gloss-count");
+    function draw() {
+      var f = text.toLowerCase(), shown = 0, html = "", cur = null;
+      all.forEach(function (g) {
+        var uses = g.uses.filter(function (u) { return (!level || u.lesson.level === level) && (!f || (g.term + " " + u.def).toLowerCase().indexOf(f) >= 0); });
+        if (!uses.length) return;
+        var L = glossLetter(g.term);
+        if (L !== cur) { if (cur !== null) html += "</dl></section>"; cur = L; html += '<section class="gl-group" id="letter-' + (L === "#" ? "num" : L) + '"><h2 class="gl-letter">' + L + "</h2><dl>"; }
+        shown++;
+        html += '<div class="gl-item"><dt>' + esc(g.term) + "</dt>" + uses.map(function (u) {
+          return "<dd>" + esc(u.def) + ' <a href="' + lessonHref(u.lesson.id) + '">' + (u.lesson.level > 1 ? "Level " + u.lesson.level + ", lesson " + u.lesson.num : "Lesson " + u.lesson.num) + "</a></dd>";
+        }).join("") + "</div>";
+      });
+      if (cur !== null) html += "</dl></section>";
+      list.innerHTML = html || '<p class="rv-note"><em>No matching terms, Abbas. Try a shorter word.</em></p>';
+      if (count) count.textContent = shown + " term" + (shown === 1 ? "" : "s");
+      document.querySelectorAll(".letter-bar a").forEach(function (a) { a.classList.toggle("off", !document.getElementById(a.getAttribute("href").slice(1))); });
+      if (typeof fitTitles === "function") { /* letter headings are short; nothing to fit */ }
     }
-    $("#gloss-search").addEventListener("input", function (e) { draw(e.target.value); });
-    draw("");
+    $("#gloss-search").addEventListener("input", function (e) { text = e.target.value; draw(); });
+    var lv = $("#gloss-levels");
+    if (lv) {
+      lv.innerHTML = '<span>Show terms from:</span><button type="button" data-lv="0" class="on">All levels</button>' + READY.map(function (m) { return '<button type="button" data-lv="' + m.n + '">Level ' + m.n + "</button>"; }).join("");
+      lv.querySelectorAll("button").forEach(function (b) { b.onclick = function () { level = +b.dataset.lv; lv.querySelectorAll("button").forEach(function (x) { x.classList.toggle("on", x === b); }); draw(); }; });
+    }
+    renderGlossary.redraw = draw;
+    draw();
   }
 
   var page = document.body.dataset.page;
@@ -1334,7 +1362,7 @@
     } else if (page === "lessons") {
       document.querySelectorAll(".unit-head").forEach(function (h, i) { h.id = "unit-" + (i + 1); });
       var top = document.querySelector("main .hero");
-      if (top) { pageBand([top.querySelector(".eyebrow"), top.querySelector("h1"), top.querySelector(".lead")]); top.remove(); }
+      if (top) { pageBand([top.querySelector(".eyebrow"), top.querySelector("h1"), top.querySelector(".lead"), top.querySelector(".band-actions")]); top.remove(); }
     } else if (page === "lesson") {
       var art = document.getElementById("lesson");
       var l = lessonById(currentLessonId()) || ALL[0];
@@ -1358,16 +1386,14 @@
     } else if (page === "glossary") {
       var hero = document.querySelector("main .hero");
       if (hero) { pageBand([hero.querySelector(".eyebrow"), hero.querySelector("h1"), hero.querySelector(".lead")]); hero.remove(); }
-      var letters = {};
-      document.querySelectorAll("#gloss dt").forEach(function (dt) {
-        var c = dt.textContent.charAt(0).toUpperCase();
-        if (!letters[c]) { letters[c] = true; dt.id = "letter-" + c; }
-      });
-      var search = document.getElementById("gloss-search");
-      if (search) {
-        search.insertAdjacentHTML("afterend", '<nav class="letter-bar" aria-label="Jump to a letter">' + Object.keys(letters).map(function (c) { return '<a href="#letter-' + c + '">' + c + "</a>"; }).join("") + "</nav>");
-        search.insertAdjacentHTML("beforebegin", termStrip());
+      var letters = ["#"].concat("ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(""));
+      var bar = document.getElementById("gloss-letters");
+      if (bar) {
+        bar.innerHTML = letters.map(function (c) { return '<a href="#letter-' + (c === "#" ? "num" : c) + '"' + (c === "#" ? ' aria-label="Numbers"' : "") + ">" + (c === "#" ? "0–9" : c) + "</a>"; }).join("");
+        if (renderGlossary.redraw) renderGlossary.redraw();
       }
+      var search = document.getElementById("gloss-search");
+      if (search) search.insertAdjacentHTML("beforebegin", termStrip());
     }
   }
   /* =====================================================================
@@ -1720,11 +1746,12 @@
     var paths = $("#paths");
     if (!paths) return;
     var s = streak(), tl = todayLessons(), due = dueCount(), anyDone = ALL.some(function (l) { return isDone(l.id); });
-    paths.insertAdjacentHTML("beforebegin", '<div class="streak-strip">' +
+    var anchor = document.querySelector(".stats-band") || paths;
+    anchor.insertAdjacentHTML("beforebegin", '<div class="streak-wrap"><div class="streak-strip">' +
       '<div><span class="ss-big">' + s + '</span><span>day streak</span></div>' +
       '<div><span class="ss-big">' + tl + " / " + extras.goal + '</span><span>today’s goal (lessons)</span></div>' +
       '<div><span class="ss-big">' + (anyDone ? due : "–") + '</span><span>' + (anyDone ? "terms due for review" : "review opens after your first lesson") + "</span></div>" +
-      '<div class="ss-links"><a class="btn" href="review.html">Review now</a><a class="btn secondary" href="me.html">My learning</a></div></div>');
+      '<div class="ss-links"><a class="btn" href="review.html">Review now</a><a class="btn secondary" href="me.html">My learning</a></div></div></div>');
   }
 
   /* ---------- lessons page: level test box ---------- */
@@ -1732,7 +1759,8 @@
     var road = $("#road");
     if (!road) return;
     var t = extras.tests[LV.n];
-    road.insertAdjacentHTML("beforebegin", '<section id="level-test" class="cta-band test-band"><span class="kicker">Level ' + LV.n + ' test</span><h2>Ready to prove it, Abbas?</h2>' +
+    var spot = $("#lessons") || road;
+    spot.insertAdjacentHTML("afterend", '<section id="level-test" class="cta-band test-band"><span class="kicker">Level ' + LV.n + ' test</span><h2>Ready to prove it, Abbas?</h2>' +
       "<p>" + TEST_LEN + " questions from across all " + LESSONS.length + " lessons. Get " + Math.ceil(TEST_LEN * TEST_PASS) + " right to earn your Level " + LV.n + " certificate." + (t ? " Your best so far: " + t.best + "/" + TEST_LEN + (t.passed ? ", passed." : ".") : "") + "</p>" +
       '<a class="btn" href="review.html?test=' + LV.n + '">' + (t && t.passed ? "See my certificate" : "Take the Level " + LV.n + " test") + "</a></section>");
   }
