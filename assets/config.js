@@ -3,6 +3,6 @@
    lets each signed-in person read and write their own progress.
    Never put the "secret" or "service_role" key here. */
 window.AIA_ACCOUNT = {
-  url: "",  // Project URL, like https://abcdefgh.supabase.co
-  key: ""   // Publishable key (sb_publishable_...) or anon key
+  url: "https://mwmvvygiwmcvovxtqqub.supabase.co",
+  key: "sb_publishable_HFuW9mKxuXxPkjdNF7XAXg_FzyxywsM"
 };
